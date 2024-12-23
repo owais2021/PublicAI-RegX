@@ -1,0 +1,14 @@
+# regx-js:
+#   filter: rjsmin
+#   output: ckanext-regx/%(version)s-regx.js
+#   contents:
+#     - js/regx.js
+#   extra:
+#     preload:
+#       - base/main
+
+# regx-css:
+#   filter: cssrewrite
+#   output: ckanext-regx/%(version)s-regx.css
+#   contents:
+#     - css/regx.css
