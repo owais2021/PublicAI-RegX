@@ -60,18 +60,53 @@
 # My
 # -*- coding: utf-8 -*-
 
-import ckan.plugins as plugins
-from flask import Blueprint
+# Was working
+# import ckan.plugins as plugins
+# from flask import Blueprint
 
 
-class RegxPlugin(plugins.SingletonPlugin):
-    plugins.implements(plugins.IBlueprint)
+# class RegxPlugin(plugins.SingletonPlugin):
+#     plugins.implements(plugins.IBlueprint)
+
+#     def get_blueprint(self):
+#         blueprint = Blueprint('regx', __name__, url_prefix='/regx')
+
+#         @blueprint.route('/')
+#         def index():
+#             return 'Hello from regx!'
+
+#         return blueprint
+
+# ckanext/regx/plugin.py
+
+from ckan.plugins import toolkit as tk
+from ckan.plugins import SingletonPlugin, implements
+from ckan.plugins.interfaces import IBlueprint, IConfigurer
+from flask import Blueprint, render_template
+import os
+
+
+class RegxPlugin(SingletonPlugin):
+    implements(IBlueprint)
+    implements(IConfigurer)
 
     def get_blueprint(self):
-        blueprint = Blueprint('regx', __name__, url_prefix='/regx')
+        # Register Blueprint for Flask
+        blueprint = Blueprint(
+            "regx",
+            __name__,
+            template_folder=os.path.join(
+                os.path.dirname(__file__), "templates"),
+            url_prefix="/regx"
+        )
 
-        @blueprint.route('/')
+        @blueprint.route("/")
         def index():
-            return 'Hello from regx!'
+            return render_template("index.html")
 
         return blueprint
+
+    def update_config(self, config):
+        # Register the templates directory with CKAN
+        tk.add_template_directory(config, "templates")
+        print(os.path.join(os.path.dirname(__file__), "templates"))
