@@ -1,3 +1,4 @@
+
 # import ckan.plugins as plugins
 # import ckan.plugins.toolkit as toolkit
 
@@ -61,28 +62,109 @@
 # -*- coding: utf-8 -*-
 
 # Was working
-# import ckan.plugins as plugins
-# from flask import Blueprint
+# from ckan.plugins import toolkit as tk
+# from ckan.plugins import SingletonPlugin, implements
+# from ckan.plugins.interfaces import IBlueprint, IConfigurer
+# from flask import Blueprint, render_template
+# import os
 
 
-# class RegxPlugin(plugins.SingletonPlugin):
-#     plugins.implements(plugins.IBlueprint)
+# class RegxPlugin(SingletonPlugin):
+#     implements(IBlueprint)
+#     implements(IConfigurer)
 
 #     def get_blueprint(self):
-#         blueprint = Blueprint('regx', __name__, url_prefix='/regx')
+#         # Register Blueprint for Flask
+#         blueprint = Blueprint(
+#             "regx",
+#             __name__,
+#             template_folder=os.path.join(
+#                 os.path.dirname(__file__), "templates"),
+#             url_prefix="/regx"
+#         )
 
-#         @blueprint.route('/')
+#         @blueprint.route("/")
 #         def index():
-#             return 'Hello from regx!'
+#             return render_template("index.html")
 
 #         return blueprint
 
-# ckanext/regx/plugin.py
+#     def update_config(self, config):
+#         # Register the templates directory with CKAN
+#         tk.add_template_directory(config, "templates")
+#         print(os.path.join(os.path.dirname(__file__), "templates"))
+
+# sherry
+
+# from ckan.plugins import toolkit as tk
+# from ckan.plugins import SingletonPlugin, implements
+# from ckan.plugins.interfaces import IBlueprint, IConfigurer
+# from flask import Blueprint, render_template, request, redirect, flash
+# import os
+
+
+# class RegxPlugin(SingletonPlugin):
+#     implements(IBlueprint)
+#     implements(IConfigurer)
+
+#     def get_blueprint(self):
+#         # Register Blueprint for Flask
+#         blueprint = Blueprint(
+#             "regx",
+#             __name__,
+#             template_folder=os.path.join(
+#                 os.path.dirname(__file__), "templates"),
+#             static_folder=os.path.join(os.path.dirname(__file__), "public"),
+#             url_prefix="/regx"
+#         )
+
+#         @blueprint.route("/")
+#         def index():
+#             # Render the default page (index.html)
+#             return render_template("index.html")
+
+#         @blueprint.route("/company_form", methods=["GET"])
+#         def company_form():
+#             # Render the company form page
+#             return render_template("company_form.html")
+
+#         @blueprint.route("/submit_form", methods=["POST"])
+#         def submit_form():
+#             # Handle form submission
+#             company_name = request.form.get("company_name")
+#             website = request.form.get("website")
+#             address = request.form.get("address")
+
+#             # Basic validation
+#             if not company_name or not website or not address:
+#                 flash("All fields are required!", "error")
+#                 return redirect(tk.url_for("regx.company_form"))
+
+#             flash("Company details submitted successfully!", "success")
+#             return redirect(tk.url_for("regx.company_form"))
+
+#         return blueprint
+
+#     def update_config(self, config):
+#         # Register the templates and public directories with CKAN
+#         tk.add_template_directory(config, "templates")
+#         tk.add_public_directory(config, "public")
+#         print("Templates directory:", os.path.join(
+#             os.path.dirname(__file__), "templates"))
+
+
+# again
 
 from ckan.plugins import toolkit as tk
 from ckan.plugins import SingletonPlugin, implements
 from ckan.plugins.interfaces import IBlueprint, IConfigurer
 from flask import Blueprint, render_template
+import os
+
+from ckan.plugins import toolkit as tk
+from ckan.plugins import SingletonPlugin, implements
+from ckan.plugins.interfaces import IBlueprint, IConfigurer
+from flask import Blueprint, render_template, request
 import os
 
 
@@ -91,7 +173,6 @@ class RegxPlugin(SingletonPlugin):
     implements(IConfigurer)
 
     def get_blueprint(self):
-        # Register Blueprint for Flask
         blueprint = Blueprint(
             "regx",
             __name__,
@@ -104,9 +185,26 @@ class RegxPlugin(SingletonPlugin):
         def index():
             return render_template("index.html")
 
+        @blueprint.route("/company_form")
+        def company_form():
+            return render_template("company_form.html")
+
+        @blueprint.route("/submit_form", methods=["POST"])
+        def submit_form():
+            # Access form data
+            # company_name = request.form.get("company_name")
+            # website = request.form.get("website")
+            # address = request.form.get("address")
+
+            # Process the data (e.g., validation, saving to database)
+            # print(f"Company Name: {company_name}, Website: {
+            #       website}, Address: {address}")
+
+            # Return a success message or redirect
+            return f"Form submitted successfully! Company Name: , Website: , Address:"
+
         return blueprint
 
     def update_config(self, config):
-        # Register the templates directory with CKAN
         tk.add_template_directory(config, "templates")
-        print(os.path.join(os.path.dirname(__file__), "templates"))
+        tk.add_public_directory(config, "public")
