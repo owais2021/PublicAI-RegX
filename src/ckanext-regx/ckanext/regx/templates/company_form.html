@@ -1,31 +1,37 @@
 {% extends "page.html" %}
 
+{% import 'macros/form.html' as form %}
 {% block styles %}
 {{ super() }}
-<link rel="stylesheet" href="{{ h.url_for_static('/css/style.css') }}">
+<link rel="stylesheet" href="{{ h.url_for_static('/css/styles.css') }}">
 {% endblock %}
 
 {% block content %}
 <div class="regx-container">
     {% include "side_nav.html" %}
     <div class="main-content">
-        <h1>Company Details Form</h1>
+        <h1>Create Company Profile</h1>
+
+        <!-- 1. Plain form tag -->
         <form action="{{ h.url_for('regx.submit_form') }}" method="post" class="modern-form">
+
             <div class="form-group">
-                <label for="company_name">Company Name:</label>
-                <input type="text" id="company_name" name="company_name" placeholder="Enter company name" required>
+                <label for="company_name">Company Name</label>
+                <input type="text" id="company_name" name="company_name" placeholder="Enter company name" required />
             </div>
+
             <div class="form-group">
-                <label for="website">Website:</label>
-                <input type="url" id="website" name="website" placeholder="https://example.com" required>
+                <label for="website">Website</label>
+                <input type="url" id="website" name="website" placeholder="https://example.com" required />
             </div>
+
             <div class="form-group">
-                <label for="address">Address:</label>
+                <label for="address">Address</label>
                 <textarea id="address" name="address" rows="4" placeholder="Enter company address" required></textarea>
             </div>
+
             <button type="submit" class="btn-submit">Submit</button>
         </form>
-
     </div>
 </div>
 {% endblock %}

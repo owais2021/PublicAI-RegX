@@ -1,0 +1,180 @@
+{% extends "page.html" %}
+
+{% block styles %}
+{{ super() }}
+<!-- DataTables CSS -->
+<style>
+    /* Table Styles */
+    .dataTable {
+        width: 100%;
+        margin: 20px 0;
+        border-collapse: collapse;
+        background-color: #fff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: left;
+    }
+
+    .dataTable th,
+    .dataTable td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .dataTable th {
+        background-color: #1f8287;
+        color: white;
+        font-weight: bold;
+    }
+
+    .dataTable tr:hover {
+        background-color: #f9f9f9;
+    }
+
+    /* Button Styles */
+    .btn {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: center;
+        display: inline-block;
+    }
+
+    .btn-sm {
+        font-size: 12px;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .btn-info {
+        background-color: #007bff;
+        color: white;
+    }
+
+    /* Adjust search and entries */
+    .dataTables_wrapper .dataTables_length {
+        float: left;
+    }
+
+    .dataTables_wrapper .dataTables_filter {
+        float: right;
+        margin-top: -30px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            float: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<!-- DataTables Initialization -->
+<script>
+    jQuery.noConflict();
+    jQuery(document).ready(function ($) {
+        $('#profilesTable').DataTable({
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+            lengthChange: true,
+            pageLength: 5,
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search...",
+            },
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="regx-container">
+    {% include "side_nav.html" %}
+    <div class="main-content">
+        <h1>Company Profiles</h1>
+        <p>Manage all company profiles from the table below.</p>
+
+        <!-- DataTable Container -->
+        <div class="table-container">
+            <table id="profilesTable" class="dataTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Company Name</th>
+                        <th>Address</th>
+                        <th>Website</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                        <th>Profile</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Void Solutions</td>
+                        <td>Auf den heuen35, 28359, bremen</td>
+                        <td>www.voidsol.com</td>
+                        <td>Active</td>
+                        <td>
+                            <button class="btn btn-success btn-sm">✔</button>
+                            <button class="btn btn-danger btn-sm">✖</button>
+                        </td>
+                        <td>
+                            <button class="btn btn-info btn-sm">View Company Profile</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Void Solutions</td>
+                        <td>Auf den heuen35, 28359, bremen</td>
+                        <td>www.voidsol.com</td>
+                        <td>Active</td>
+                        <td>
+                            <button class="btn btn-success btn-sm">✔</button>
+                            <button class="btn btn-danger btn-sm">✖</button>
+                        </td>
+                        <td>
+                            <button class="btn btn-info btn-sm">View Company Profile</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Void Solutions</td>
+                        <td>Auf den heuen35, 28359, bremen</td>
+                        <td>www.voidsol.com</td>
+                        <td>Active</td>
+                        <td>
+                            <button class="btn btn-success btn-sm">✔</button>
+                            <button class="btn btn-danger btn-sm">✖</button>
+                        </td>
+                        <td>
+                            <button class="btn btn-info btn-sm">View Company Profile</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

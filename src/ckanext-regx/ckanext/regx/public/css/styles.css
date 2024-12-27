@@ -45,7 +45,7 @@ body {
 }
 
 .side-nav ul li a:hover {
-    background-color: #0056b3;
+    background-color: #599eb5;
 }
 
 /* Main Content Styling */
@@ -59,7 +59,7 @@ body {
 
 /* Form Styling */
 h1 {
-    color: #007bff;
+    color: #0b4852;
     margin-bottom: 20px;
     text-align: center;
 }
@@ -120,4 +120,67 @@ h1 {
         width: 100%;
         margin-bottom: 20px;
     }
+}
+
+/* DataTable Styling */
+/* DataTable Styling */
+.table-container {
+    margin: 20px 0;
+}
+
+.dataTables_wrapper {
+    font-family: Arial, sans-serif;
+    margin-top: 15px;
+}
+
+.dataTables_length select {
+    padding: 5px;
+    margin-right: 5px;
+}
+
+.dataTables_filter input {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    margin-left: 10px;
+}
+
+.dataTables_paginate {
+    margin-top: 15px;
+}
+
+.dataTables_paginate .paginate_button {
+    background-color: #007bff;
+    color: white !important;
+    border-radius: 4px;
+    padding: 5px 10px;
+    margin: 0 5px;
+}
+
+.dataTables_paginate .paginate_button:hover {
+    background-color: #0056b3;
+}
+
+.dataTables_info {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+/* Add separators between rows */
+#profilesTable tbody tr {
+    border-bottom: 1px solid #ddd;
+}
+
+/* Button styles for View Profile */
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-info:hover {
+    background-color: #138496;
 }
