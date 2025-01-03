@@ -296,6 +296,19 @@ class RegxPlugin(SingletonPlugin):
     implements(IBlueprint)
     implements(IConfigurer)
 
+    def _check_access(self, admin_only=False):
+        """
+        Check access based on user role.
+        :param admin_only: If True, only admin users can access the page.
+        """
+        user = tk.c.userobj
+        if not user:
+            # If no user is logged in, return 404
+            tk.abort(404, "Page not found")
+        if admin_only and not user.sysadmin:
+            # If the page requires admin access and the user is not admin, return 404
+            tk.abort(404, "Page not found")
+
     def get_blueprint(self):
         blueprint = Blueprint(
             'regx',
@@ -312,6 +325,7 @@ class RegxPlugin(SingletonPlugin):
             """
             Index route for the plugin.
             """
+            self._check_access()  # Accessible to all logged-in users
             return tk.render('index.html')
 
         # Routes for the Sherry form
@@ -321,24 +335,48 @@ class RegxPlugin(SingletonPlugin):
                                SherryController.submit_sherry, methods=['POST'])
 
         # Routes for the Company form
-        blueprint.add_url_rule('/company_form', 'company_form',
-                               CompanyController.company_form, methods=['GET'])
+        @blueprint.route('/company_form', methods=['GET'])
+        def company_form():
+            """
+            Page for creating a company profile.
+            Accessible only to logged-in users.
+            """
+            self._check_access()  # Ensure only logged-in users can access
+            return CompanyController.company_form()
         blueprint.add_url_rule('/submit_company', 'submit_company',
                                CompanyController.submit_company, methods=['POST'])
 
         # Admin Panel Routes
-        blueprint.add_url_rule("/admin_all_profiles", "admin_all_profiles",
-                               AdminController.admin_all_profiles, methods=["GET"])
-        blueprint.add_url_rule("/toggle_status", "toggle_status",
-                               AdminController.toggle_status, methods=["POST"])
+        @blueprint.route('/admin_all_profiles')
+        def admin_all_profiles():
+            """
+            Admin-only page to manage all profiles.
+            """
+            self._check_access(admin_only=True)
+            return AdminController.admin_all_profiles()
+
+        @blueprint.route('/toggle_status', methods=['POST'])
+        def toggle_status():
+            """
+            Admin-only endpoint to toggle the status of a company profile.
+            """
+            self._check_access(admin_only=True)
+            return AdminController.toggle_status()
+
+        @blueprint.route('/download_dataset/<int:company_id>', methods=['GET'])
+        def download_dataset(company_id):
+            """
+            Admin-only endpoint to download a dataset.
+            """
+            self._check_access(admin_only=True)
+            return AdminController.download_dataset(company_id)
 
         @blueprint.route('/admin_all_user_profiles')
         def admin_all_user_profiles():
             """
             Admin-only page to view all user profiles.
             """
-            if not tk.c.userobj or not tk.c.userobj.sysadmin:
-                abort(403)
+            self._check_access(admin_only=True)
             return render_template('admin_all_user_profiles.html')
 
         return blueprint
