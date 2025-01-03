@@ -60,7 +60,7 @@
                 dataSrc: 'data'
             },
             columns: [
-                { data: 'id' },
+                { data: 'id', render: (data, type, row, meta) => meta.row + 1 }, // SR No
                 { data: 'company_name' },
                 { data: 'address' },
                 { data: 'website' },
@@ -70,6 +70,7 @@
                         return data ? 'Active' : 'Inactive';
                     }
                 },
+                { data: 'created' }, // Created Date
                 {
                     data: null,
                     render: function (data, type, row) {
@@ -79,17 +80,8 @@
                                     data-status="${!row.status}">
                                 ${row.status ? 'Deactivate' : 'Activate'}
                             </button>
-                        `;
-                    }
-                },
-                {
-                    data: null,
-                    render: function (data, type, row) {
-                        return `
-                            <button class="btn btn-sm btn-info"
-                                    data-id="${row.id}"
-                                    onclick="downloadDataset(${row.id})">
-                                Download Dataset
+                            <button class="btn btn-sm btn-info" onclick="downloadDataset(${row.id})">
+                                Download JSON
                             </button>
                         `;
                     }
@@ -97,7 +89,7 @@
             ]
         });
 
-        // AJAX request for status toggle
+        // Toggle Status Button
         $('#profilesTable').on('click', '.btn-status', function () {
             const button = $(this);
             const companyId = button.data('id');
@@ -140,13 +132,13 @@
         <table id="profilesTable" class="dataTable display">
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>SR No</th>
                     <th>Company Name</th>
                     <th>Address</th>
                     <th>Website</th>
                     <th>Status</th>
+                    <th>Created Date</th>
                     <th>Actions</th>
-                    <th>JSON</th>
                 </tr>
             </thead>
             <tbody></tbody>

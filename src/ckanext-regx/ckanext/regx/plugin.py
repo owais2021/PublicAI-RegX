@@ -280,6 +280,8 @@ from flask import Blueprint, render_template, abort
 from ckanext.regx.controllers.sherry_controller import SherryController
 from ckanext.regx.controllers.company_controller import CompanyController
 from ckanext.regx.controllers.admin_controller import AdminController
+from ckanext.regx.controllers.admin_user_controller import AdminUserController
+from ckanext.regx.controllers.claim_controller import ClaimController
 from ckanext.regx.lib.database import (
     connect_to_db,
     create_sherry_table,
@@ -346,7 +348,13 @@ class RegxPlugin(SingletonPlugin):
         blueprint.add_url_rule('/submit_company', 'submit_company',
                                CompanyController.submit_company, methods=['POST'])
 
+        # Routes for the Claim Form
+        blueprint.add_url_rule('/claim_profile', 'claim_profile',
+                               ClaimController.claim_profile, methods=['GET'])
+        blueprint.add_url_rule('/send_otp', 'send_otp',
+                               ClaimController.send_otp, methods=['POST'])
         # Admin Panel Routes
+
         @blueprint.route('/admin_all_profiles')
         def admin_all_profiles():
             """
@@ -377,7 +385,7 @@ class RegxPlugin(SingletonPlugin):
             Admin-only page to view all user profiles.
             """
             self._check_access(admin_only=True)
-            return render_template('admin_all_user_profiles.html')
+            return AdminUserController.admin_all_user_profiles()
 
         return blueprint
 

@@ -2,22 +2,12 @@
 
 {% block styles %}
 {{ super() }}
-<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 <style>
-    /* Table Styles */
     .dataTable {
         width: 100%;
         margin: 20px 0;
         border-collapse: collapse;
-        background-color: #fff;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        text-align: left;
-    }
-
-    .dataTable th,
-    .dataTable td {
-        padding: 12px;
-        border-bottom: 1px solid #ddd;
     }
 
     .dataTable th {
@@ -26,83 +16,57 @@
         font-weight: bold;
     }
 
-    .dataTable tr:hover {
-        background-color: #f9f9f9;
-    }
-
-    /* Button Styles */
     .btn {
         padding: 5px 10px;
         border: none;
         border-radius: 4px;
         cursor: pointer;
-        text-align: center;
-        display: inline-block;
     }
 
     .btn-sm {
         font-size: 12px;
     }
 
-    .btn-success {
+    .btn-activate {
         background-color: #28a745;
+        /* Green */
         color: white;
     }
 
-    .btn-danger {
+    .btn-deactivate {
         background-color: #dc3545;
+        /* Red */
         color: white;
-    }
-
-    .btn-info {
-        background-color: #007bff;
-        color: white;
-    }
-
-    /* Adjust search and entries */
-    .dataTables_wrapper .dataTables_length {
-        float: left;
-    }
-
-    .dataTables_wrapper .dataTables_filter {
-        float: right;
-        margin-top: -30px;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter {
-            float: none;
-            text-align: center;
-            margin-top: 10px;
-        }
     }
 </style>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<!-- DataTables Initialization -->
 <script>
     jQuery.noConflict();
     jQuery(document).ready(function ($) {
-        $('#profilesTable').DataTable({
-            paging: true,
-            searching: true,
-            ordering: true,
-            info: true,
-            lengthChange: true,
-            pageLength: 5,
-            language: {
-                search: "_INPUT_",
-                searchPlaceholder: "Search Users...",
+        const table = $('#profilesTable').DataTable({
+            ajax: {
+                url: '/regx/admin_all_user_profiles',
+                type: 'GET',
+                dataSrc: 'data' // Path to the data in JSON response
             },
+            columns: [
+                {
+                    data: null,
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1; // Generate serial number
+                    },
+                    title: 'Sr No' // Column title
+                },
+                { data: 'name', title: 'Name' },
+                { data: 'email', title: 'Email' },
+                { data: 'role', title: 'Role' },
+                { data: 'status', title: 'Status' },
+            ]
         });
     });
 </script>
@@ -113,58 +77,17 @@
     {% include "side_nav.html" %}
     <div class="main-content">
         <h1>User Profiles</h1>
-        <p>Manage all user profiles from the table below.</p>
-
-        <!-- DataTable Container -->
-        <div class="table-container">
-            <table id="profilesTable" class="dataTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>John Doe</td>
-                        <td>john.doe@example.com</td>
-                        <td>Admin</td>
-                        <td>Active</td>
-                        <td>
-                            <button class="btn btn-success btn-sm">✔</button>
-                            <button class="btn btn-danger btn-sm">✖</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>Jane Smith</td>
-                        <td>jane.smith@example.com</td>
-                        <td>User</td>
-                        <td>Pending</td>
-                        <td>
-                            <button class="btn btn-success btn-sm">✔</button>
-                            <button class="btn btn-danger btn-sm">✖</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Mark Wilson</td>
-                        <td>mark.wilson@example.com</td>
-                        <td>Editor</td>
-                        <td>Inactive</td>
-                        <td>
-                            <button class="btn btn-success btn-sm">✔</button>
-                            <button class="btn btn-danger btn-sm">✖</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <table id="profilesTable" class="dataTable display">
+            <thead>
+                <tr>
+                    <th>Sr No</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+        </table>
     </div>
 </div>
 {% endblock %}

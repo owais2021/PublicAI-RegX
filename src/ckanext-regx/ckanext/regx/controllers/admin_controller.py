@@ -1,6 +1,6 @@
 import logging
 import json
-from flask import jsonify, Response, request, render_template
+from flask import jsonify, Response, request
 from ckan.plugins import toolkit as tk
 from ckanext.regx.lib.database import connect_to_db, close_db_connection
 
@@ -15,13 +15,12 @@ class AdminController:
         """
         try:
             if "application/json" in request.headers.get("Accept", ""):
-                # AJAX request for JSON data
                 connection = connect_to_db()
                 if connection:
                     try:
                         with connection.cursor() as cursor:
                             cursor.execute(
-                                "SELECT id, company_name, address, website, status FROM regx_company"
+                                "SELECT id, company_name, address, website, status, created FROM regx_company"
                             )
                             rows = cursor.fetchall()
                             companies = [
@@ -31,6 +30,7 @@ class AdminController:
                                     "address": row[2],
                                     "website": row[3],
                                     "status": row[4],
+                                    "created": row[5].strftime('%Y-%m-%d') if row[5] else None,
                                 }
                                 for row in rows
                             ]
@@ -40,7 +40,6 @@ class AdminController:
                 else:
                     return jsonify({"error": "Database connection failed."}), 500
             else:
-                # Render the HTML page
                 return tk.render("admin_all_profiles.html")
         except Exception as e:
             log.error(f"Error fetching companies: {e}")
@@ -82,7 +81,6 @@ class AdminController:
         Download dataset for a specific company as JSON.
         """
         try:
-            log.debug(f"Downloading dataset for company_id: {company_id}")
             connection = connect_to_db()
             if connection:
                 try:
@@ -92,7 +90,6 @@ class AdminController:
                             (company_id,),
                         )
                         row = cursor.fetchone()
-                        log.debug(f"Query result for company_id {company_id}: {row}")  # noqa
                         if row:
                             company_data = {
                                 "id": row[0],
@@ -105,30 +102,14 @@ class AdminController:
                                 json.dumps(company_data, indent=4),
                                 content_type="application/json",
                             )
-                            response.headers["Content-Disposition"] = (f"attachment; filename=company_{company_id}.json"  # noqa
-                                                                       )
+                            response.headers["Content-Disposition"] = (f"attachment; filename=company_{company_id}.json")  # noqa
                             return response
                         else:
-                            log.error(
-                                f"No company found for company_id {company_id}")
-                            return Response(
-                                json.dumps({"error": "Company not found."}),
-                                content_type="application/json",
-                                status=404,
-                            )
+                            return jsonify({"error": "Company not found."}), 404
                 finally:
                     close_db_connection(connection)
             else:
-                log.error("Database connection failed.")
-                return Response(
-                    json.dumps({"error": "Database connection failed."}),
-                    content_type="application/json",
-                    status=500,
-                )
+                return jsonify({"error": "Database connection failed."}), 500
         except Exception as e:
             log.error(f"Error downloading dataset: {e}")
-            return Response(
-                json.dumps({"error": "Unexpected error occurred."}),
-                content_type="application/json",
-                status=500,
-            )
+            return jsonify({"error": "Unexpected error occurred."}), 500
