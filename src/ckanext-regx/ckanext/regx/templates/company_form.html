@@ -1,9 +1,39 @@
 {% extends "page.html" %}
 
-{% import 'macros/form.html' as form %}
 {% block styles %}
 {{ super() }}
-<link rel="stylesheet" href="{{ h.url_for_static('/css/styles.css') }}">
+<style>
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+    }
+
+    .toast {
+        display: flex;
+        align-items: center;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        padding: 12px 20px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        color: #721c24;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .toast.success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .toast .close-btn {
+        margin-left: auto;
+        font-size: 16px;
+        cursor: pointer;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -12,26 +42,55 @@
     <div class="main-content">
         <h1>Create Company Profile</h1>
 
-        <!-- 1. Plain form tag -->
-        <form action="{{ h.url_for('regx.submit_form') }}" method="post" class="modern-form">
-
+        <!-- Form -->
+        <form action="{{ h.url_for('regx.submit_company') }}" method="post" class="modern-form">
+            {{ h.csrf_input() }}
             <div class="form-group">
                 <label for="company_name">Company Name</label>
                 <input type="text" id="company_name" name="company_name" placeholder="Enter company name" required />
             </div>
-
             <div class="form-group">
                 <label for="website">Website</label>
                 <input type="url" id="website" name="website" placeholder="https://example.com" required />
             </div>
-
             <div class="form-group">
                 <label for="address">Address</label>
                 <textarea id="address" name="address" rows="4" placeholder="Enter company address" required></textarea>
             </div>
-
             <button type="submit" class="btn-submit">Submit</button>
         </form>
     </div>
 </div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="toast-container"></div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Function to display toast alerts
+    function showToast(message, type = 'error') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.classList.add('toast', type);
+        toast.innerHTML = `
+            <span>${message}</span>
+            <span class="close-btn" onclick="this.parentElement.remove()">×</span>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000); // Auto-remove after 5 seconds
+    }
+
+    // Load flash messages passed from the backend
+    document.addEventListener('DOMContentLoaded', () => {
+        const flashMessages = {{ flash_messages | tojson
+    }};
+    if (flashMessages && flashMessages.length) {
+        flashMessages.forEach(([category, message]) => {
+            showToast(message, category === 'success' ? 'success' : 'error');
+        });
+    }
+    });
+</script>
 {% endblock %}

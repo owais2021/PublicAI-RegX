@@ -271,13 +271,25 @@
 #         tk.add_public_directory(config, "public")
 
 # DB
-from ckan.plugins import toolkit as tk
-from ckan.plugins.core import SingletonPlugin, implements
-from ckan.plugins.interfaces import IBlueprint, IConfigurer
-from flask import Blueprint, render_template, request, redirect, url_for, abort
-from ckan.model import Session
-from .model import CompanyProfile
 import os
+import logging
+from ckan.plugins import SingletonPlugin, implements
+from ckan.plugins import toolkit as tk
+from ckan.plugins.interfaces import IBlueprint, IConfigurer
+from flask import Blueprint, render_template, abort
+from ckanext.regx.controllers.sherry_controller import SherryController
+from ckanext.regx.controllers.company_controller import CompanyController
+from ckanext.regx.controllers.admin_controller import AdminController
+from ckanext.regx.lib.database import (
+    connect_to_db,
+    create_sherry_table,
+    create_company_table,
+    close_db_connection
+)
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger(__name__)
 
 
 class RegxPlugin(SingletonPlugin):
@@ -294,50 +306,60 @@ class RegxPlugin(SingletonPlugin):
             url_prefix='/regx'
         )
 
+        # Index route
         @blueprint.route('/')
         def index():
-            # Basic index page
-            return render_template('index.html')
+            """
+            Index route for the plugin.
+            """
+            return tk.render('index.html')
 
-        @blueprint.route('/company_form', methods=['GET'])
-        def company_form():
-            # 1. Grab the CSRF token from the CKAN cookie
-            token_from_cookie = tk.request.cookies.get('_csrf_token', '')
+        # Routes for the Sherry form
+        blueprint.add_url_rule('/sherry_form', 'sherry_form',
+                               SherryController.sherry_form, methods=['GET'])
+        blueprint.add_url_rule('/submit_sherry', 'submit_sherry',
+                               SherryController.submit_sherry, methods=['POST'])
 
-            # 2. Pass it to the template as 'csrf_value'
-            return render_template(
-                'company_form.html',
-                csrf_value=token_from_cookie
-            )
+        # Routes for the Company form
+        blueprint.add_url_rule('/company_form', 'company_form',
+                               CompanyController.company_form, methods=['GET'])
+        blueprint.add_url_rule('/submit_company', 'submit_company',
+                               CompanyController.submit_company, methods=['POST'])
 
-        @blueprint.route('/submit_form', methods=['POST'])
-        def submit_form():
-            # Retrieve form data
-            company_name = request.form['company_name']
-            website = request.form['website']
-            address = request.form['address']
+        # Admin Panel Routes
+        blueprint.add_url_rule("/admin_all_profiles", "admin_all_profiles",
+                               AdminController.admin_all_profiles, methods=["GET"])
+        blueprint.add_url_rule("/toggle_status", "toggle_status",
+                               AdminController.toggle_status, methods=["POST"])
 
-            # Create and save the new CompanyProfile
-            profile = CompanyProfile(
-                company_name=company_name,
-                website=website,
-                address=address
-            )
-            Session.add(profile)
-            Session.commit()
-
-            # Redirect to a confirmation page or back to the form
-            return redirect(url_for('.index'))
-
-        @blueprint.route('/admin_all_profiles')
-        def admin_all_profiles():
-            # Ensure user is logged in and is an admin
+        @blueprint.route('/admin_all_user_profiles')
+        def admin_all_user_profiles():
+            """
+            Admin-only page to view all user profiles.
+            """
             if not tk.c.userobj or not tk.c.userobj.sysadmin:
                 abort(403)
-            return render_template('admin_all_profiles.html')
+            return render_template('admin_all_user_profiles.html')
 
         return blueprint
 
     def update_config(self, config):
+        """
+        Update CKAN configuration and initialize database tables.
+        """
         tk.add_template_directory(config, 'templates')
         tk.add_public_directory(config, 'public')
+
+        # Create tables during plugin initialization
+        connection = connect_to_db()
+        if connection:
+            try:
+                create_sherry_table(connection)
+                create_company_table(connection)
+            except Exception as e:
+                log.error(f"Error initializing database tables: {e}")
+            finally:
+                close_db_connection(connection)
+        else:
+            log.error(
+                "Failed to connect to the database during plugin initialization.")

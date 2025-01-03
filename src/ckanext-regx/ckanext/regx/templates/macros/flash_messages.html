@@ -1,0 +1,12 @@
+{% macro flash_messages() %}
+{% set messages = h.get_flashed_messages() %}
+{% if messages %}
+<div class="flash-messages">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.category }}">
+        {{ message.message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endmacro %}

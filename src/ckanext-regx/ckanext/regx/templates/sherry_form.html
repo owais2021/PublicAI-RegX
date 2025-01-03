@@ -1,0 +1,22 @@
+{% extends "page.html" %}
+
+{% block content %}
+<div>
+    <h1>Sherry Form</h1>
+    <form action="/regx/submit_sherry" method="post">
+        {{ h.csrf_input() }} <!-- For CSRF protection -->
+
+        <div>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+
+        <div>
+            <label for="address">Address:</label>
+            <textarea id="address" name="address" required></textarea>
+        </div>
+
+        <button type="submit">Submit</button>
+    </form>
+</div>
+{% endblock %}

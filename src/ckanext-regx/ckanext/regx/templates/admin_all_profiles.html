@@ -2,42 +2,19 @@
 
 {% block styles %}
 {{ super() }}
-<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 <style>
-    /* Table Styles */
     .dataTable {
         width: 100%;
         margin: 20px 0;
         border-collapse: collapse;
-        background-color: #fff;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        text-align: left;
     }
 
-    .dataTable th,
-    .dataTable td {
-        padding: 12px;
-        border-bottom: 1px solid #ddd;
-    }
-
-    .dataTable th {
-        background-color: #1f8287;
-        color: white;
-        font-weight: bold;
-    }
-
-    .dataTable tr:hover {
-        background-color: #f9f9f9;
-    }
-
-    /* Button Styles */
     .btn {
         padding: 5px 10px;
         border: none;
         border-radius: 4px;
         cursor: pointer;
-        text-align: center;
-        display: inline-block;
     }
 
     .btn-sm {
@@ -53,56 +30,74 @@
         background-color: #dc3545;
         color: white;
     }
-
-    .btn-info {
-        background-color: #007bff;
-        color: white;
-    }
-
-    /* Adjust search and entries */
-    .dataTables_wrapper .dataTables_length {
-        float: left;
-    }
-
-    .dataTables_wrapper .dataTables_filter {
-        float: right;
-        margin-top: -30px;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter {
-            float: none;
-            text-align: center;
-            margin-top: 10px;
-        }
-    }
 </style>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<!-- DataTables Initialization -->
 <script>
     jQuery.noConflict();
     jQuery(document).ready(function ($) {
+        const csrfToken = $('input[name="_csrf_token"]').val(); // Get CSRF token
+
         $('#profilesTable').DataTable({
-            paging: true,
-            searching: true,
-            ordering: true,
-            info: true,
-            lengthChange: true,
-            pageLength: 5,
-            language: {
-                search: "_INPUT_",
-                searchPlaceholder: "Search...",
+            ajax: {
+                url: '/regx/admin_all_profiles', // Backend URL to fetch data
+                type: 'GET',
+                dataSrc: 'data' // Path to data in the JSON response
             },
+            columns: [
+                { data: 'id' },
+                { data: 'company_name' },
+                { data: 'address' },
+                { data: 'website' },
+                {
+                    data: 'status',
+                    render: function (data, type, row) {
+                        return data ? 'Active' : 'Inactive';
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `
+                            <button class="btn btn-sm btn-status ${row.status ? 'btn-danger' : 'btn-success'}"
+                                    data-id="${row.id}" 
+                                    data-status="${!row.status}">
+                                ${row.status ? 'Deactivate' : 'Activate'}
+                            </button>
+                        `;
+                    }
+                }
+            ]
+        });
+
+        // AJAX request for status toggle
+        $('#profilesTable').on('click', '.btn-status', function () {
+            const button = $(this);
+            const companyId = button.data('id');
+            const newStatus = button.data('status');
+
+            $.ajax({
+                url: '/regx/toggle_status',
+                type: 'POST',
+                headers: {
+                    'X-CSRF-Token': csrfToken
+                },
+                data: {
+                    company_id: companyId,
+                    new_status: newStatus
+                },
+                success: function (response) {
+                    alert(response.message);
+                    $('#profilesTable').DataTable().ajax.reload();
+                },
+                error: function (xhr) {
+                    alert('Error: ' + xhr.responseJSON.error);
+                }
+            });
         });
     });
 </script>
@@ -113,68 +108,21 @@
     {% include "side_nav.html" %}
     <div class="main-content">
         <h1>Company Profiles</h1>
-        <p>Manage all company profiles from the table below.</p>
-
-        <!-- DataTable Container -->
-        <div class="table-container">
-            <table id="profilesTable" class="dataTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Company Name</th>
-                        <th>Address</th>
-                        <th>Website</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                        <th>Profile</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Void Solutions</td>
-                        <td>Auf den heuen35, 28359, bremen</td>
-                        <td>www.voidsol.com</td>
-                        <td>Active</td>
-                        <td>
-                            <button class="btn btn-success btn-sm">✔</button>
-                            <button class="btn btn-danger btn-sm">✖</button>
-                        </td>
-                        <td>
-                            <button class="btn btn-info btn-sm">View Company Profile</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>Void Solutions</td>
-                        <td>Auf den heuen35, 28359, bremen</td>
-                        <td>www.voidsol.com</td>
-                        <td>Active</td>
-                        <td>
-                            <button class="btn btn-success btn-sm">✔</button>
-                            <button class="btn btn-danger btn-sm">✖</button>
-                        </td>
-                        <td>
-                            <button class="btn btn-info btn-sm">View Company Profile</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Void Solutions</td>
-                        <td>Auf den heuen35, 28359, bremen</td>
-                        <td>www.voidsol.com</td>
-                        <td>Active</td>
-                        <td>
-                            <button class="btn btn-success btn-sm">✔</button>
-                            <button class="btn btn-danger btn-sm">✖</button>
-                        </td>
-                        <td>
-                            <button class="btn btn-info btn-sm">View Company Profile</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <p>Manage all company profiles below.</p>
+        {{ h.csrf_input() }}
+        <table id="profilesTable" class="dataTable display">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Company Name</th>
+                    <th>Address</th>
+                    <th>Website</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
