@@ -2,16 +2,29 @@
 
 {% block styles %}
 {{ super() }}
-<link rel="stylesheet" href="{{ h.url_for_static('/css/styles.css') }}">
+<link rel="stylesheet" href="{{ h.url_for_static('/css/claim_form.css') }}">
+<style>
+    .claim-form-btn.loading {
+        background-color: #f0ad4e;
+        cursor: not-allowed;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="regx-container">
     {% include "side_nav.html" %}
     <div class="main-content">
-        <div class="claim-form-container">
+        <div id="claim-profile-container">
             <h1>Claim Your Profile</h1>
-            <form id="claim_profile" action="/send_otp" method="POST">
+
+            <!-- Claim Profile Form -->
+            <form id="claim_profile" action="/regx/submit_claim_profile" method="post" {% if session.otp_verified
+                %}class="hidden" {% endif %}>
                 {{ h.csrf_input() }}
                 <div class="claim-form-group">
                     <label for="website">Your Website</label>
@@ -23,7 +36,101 @@
                 </div>
                 <button type="submit" class="claim-form-btn">Send OTP</button>
             </form>
+
+            <!-- OTP Verification Section -->
+            <div id="otp-verification" {% if not session.otp_verified %}style="display: none;" {% endif %}>
+                <form id="otp_form" action="/regx/verify_otp" method="post">
+                    {{ h.csrf_input() }}
+                    <div class="claim-form-group">
+                        <label for="otp">Enter OTP</label>
+                        <input type="text" id="otp" name="otp" placeholder="Enter the OTP sent to your email"
+                            maxlength="4" required>
+                    </div>
+                    <button type="submit" class="claim-form-btn">Verify OTP</button>
+                </form>
+            </div>
+
+            <!-- Post Verification Section -->
+            <div id="post-verification" class="hidden">
+                <form id="post_verification_form" action="/regx/submit_post_verification" method="post">
+                    {{ h.csrf_input() }}
+                    <div class="claim-form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" name="name" placeholder="Enter your name" required>
+                    </div>
+                    <div class="claim-form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    </div>
+                    <button type="submit" class="claim-form-btn">Submit Changes</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Handle OTP Submission
+    document.querySelector("#claim_profile").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitButton = form.querySelector(".claim-form-btn");
+
+        submitButton.classList.add("loading");
+        submitButton.textContent = "Sending OTP...";
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.status) {
+                alert(result.message);
+                form.style.display = "none";
+                document.querySelector("#otp-verification").style.display = "block";
+            } else {
+                alert(result.error || "An unexpected error occurred.");
+            }
+        } catch (error) {
+            alert("An unexpected error occurred. Please try again.");
+            console.error("Error in form submission:", error);
+        } finally {
+            submitButton.classList.remove("loading");
+            submitButton.textContent = "Send OTP";
+            submitButton.disabled = false;
+        }
+    });
+
+    // Handle OTP Verification
+    document.querySelector("#otp_form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.status) {
+                alert(result.message);
+                form.style.display = "none";
+                document.querySelector("#post-verification").classList.remove("hidden");
+            } else {
+                alert(result.error || "Invalid OTP. Please try again.");
+            }
+        } catch (error) {
+            alert("An unexpected error occurred. Please try again.");
+            console.error("Error in OTP verification:", error);
+        }
+    });
+</script>
 {% endblock %}
