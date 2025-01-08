@@ -276,15 +276,16 @@ import logging
 from ckan.plugins import SingletonPlugin, implements
 from ckan.plugins import toolkit as tk
 from ckan.plugins.interfaces import IBlueprint, IConfigurer
-from flask import Blueprint, render_template, abort, request
-from ckanext.regx.controllers.sherry_controller import SherryController
+from flask import Blueprint, request, render_template
 from ckanext.regx.controllers.company_controller import CompanyController
+from ckanext.regx.controllers.edit_company_controller import EditCompanyController
+from ckanext.regx.controllers.search_profiles_controller import SearchProfilesController
 from ckanext.regx.controllers.admin_controller import AdminController
 from ckanext.regx.controllers.admin_user_controller import AdminUserController
 from ckanext.regx.controllers.claim_profile_controller import ClaimProfileController
+from ckanext.regx.controllers.search_company_controller import CompanySearchController
 from ckanext.regx.lib.database import (
     connect_to_db,
-    create_sherry_table,
     create_company_table,
     close_db_connection
 )
@@ -330,12 +331,6 @@ class RegxPlugin(SingletonPlugin):
             self._check_access()  # Accessible to all logged-in users
             return tk.render('index.html')
 
-        # Routes for the Sherry form
-        blueprint.add_url_rule('/sherry_form', 'sherry_form',
-                               SherryController.sherry_form, methods=['GET'])
-        blueprint.add_url_rule('/submit_sherry', 'submit_sherry',
-                               SherryController.submit_sherry, methods=['POST'])
-
         # Routes for the Company form
         @blueprint.route('/company_form', methods=['GET'])
         def company_form():
@@ -371,8 +366,55 @@ class RegxPlugin(SingletonPlugin):
             methods=['POST']
         )
 
-        # Admin Panel Routes
+        # # Edit Profile
+        # blueprint.add_url_rule(
+        #     '/edit_company',
+        #     'edit_company',
+        #     EditCompanyController.edit_company,
+        #     methods=['GET']
+        # )
+        # Routes for Search Profiles
 
+        @blueprint.route('/search_profiles', methods=['GET'])
+        def search_profiles():
+            """
+            Page for searching company profiles.
+            """
+            return SearchProfilesController.search_profiles()
+
+        @blueprint.route('/edit_company1', methods=['GET'])
+        def edit_company1():
+            """
+            Page for searching company profiles.
+            """
+            return EditCompanyController.edit_company1()
+
+        @blueprint.route('/search_profiles/fetch', methods=['POST'])
+        def fetch_profiles():
+            return SearchProfilesController.fetch_profiles()
+
+        # Add route for search Company page
+
+        @blueprint.route('/search_company', methods=['GET'])
+        def render_search_page():
+            return tk.render('search_company.html')
+
+        # Add route for fetching company details
+        blueprint.add_url_rule(
+            '/search_company',
+            'search_company',
+            CompanySearchController.search_company,
+            methods=['POST']
+        )
+        # Route to handle updates
+        blueprint.add_url_rule(
+            '/update_company',
+            'update_company',
+            CompanySearchController.update_company,
+            methods=['POST']
+        )
+
+    # Admin Panel Routes
         @blueprint.route('/admin_all_profiles')
         def admin_all_profiles():
             """
@@ -418,7 +460,6 @@ class RegxPlugin(SingletonPlugin):
         connection = connect_to_db()
         if connection:
             try:
-                create_sherry_table(connection)
                 create_company_table(connection)
             except Exception as e:
                 log.error(f"Error initializing database tables: {e}")

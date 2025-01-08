@@ -8,10 +8,6 @@
         background-color: #f0ad4e;
         cursor: not-allowed;
     }
-
-    .hidden {
-        display: none;
-    }
 </style>
 {% endblock %}
 
@@ -23,8 +19,7 @@
             <h1>Claim Your Profile</h1>
 
             <!-- Claim Profile Form -->
-            <form id="claim_profile" action="/regx/submit_claim_profile" method="post" {% if session.otp_verified
-                %}class="hidden" {% endif %}>
+            <form id="claim_profile" action="/regx/submit_claim_profile" method="post">
                 {{ h.csrf_input() }}
                 <div class="claim-form-group">
                     <label for="website">Your Website</label>
@@ -38,7 +33,7 @@
             </form>
 
             <!-- OTP Verification Section -->
-            <div id="otp-verification" {% if not session.otp_verified %}style="display: none;" {% endif %}>
+            <div id="otp-verification" style="display: none;">
                 <form id="otp_form" action="/regx/verify_otp" method="post">
                     {{ h.csrf_input() }}
                     <div class="claim-form-group">
@@ -47,22 +42,6 @@
                             maxlength="4" required>
                     </div>
                     <button type="submit" class="claim-form-btn">Verify OTP</button>
-                </form>
-            </div>
-
-            <!-- Post Verification Section -->
-            <div id="post-verification" class="hidden">
-                <form id="post_verification_form" action="/regx/submit_post_verification" method="post">
-                    {{ h.csrf_input() }}
-                    <div class="claim-form-group">
-                        <label for="name">Name</label>
-                        <input type="text" id="name" name="name" placeholder="Enter your name" required>
-                    </div>
-                    <div class="claim-form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
-                    </div>
-                    <button type="submit" class="claim-form-btn">Submit Changes</button>
                 </form>
             </div>
         </div>
@@ -77,6 +56,7 @@
         const formData = new FormData(form);
         const submitButton = form.querySelector(".claim-form-btn");
 
+        // Set button to loading state
         submitButton.classList.add("loading");
         submitButton.textContent = "Sending OTP...";
         submitButton.disabled = true;
@@ -90,16 +70,17 @@
             const result = await response.json();
 
             if (response.ok && result.status) {
-                alert(result.message);
-                form.style.display = "none";
-                document.querySelector("#otp-verification").style.display = "block";
+                alert(result.message); // Show success message
+                form.style.display = "none"; // Hide claim profile form
+                document.querySelector("#otp-verification").style.display = "block"; // Show OTP field
             } else {
-                alert(result.error || "An unexpected error occurred.");
+                alert(result.message || "An unexpected error occurred."); // Show error message
             }
         } catch (error) {
             alert("An unexpected error occurred. Please try again.");
             console.error("Error in form submission:", error);
         } finally {
+            // Reset button state
             submitButton.classList.remove("loading");
             submitButton.textContent = "Send OTP";
             submitButton.disabled = false;
@@ -120,10 +101,8 @@
 
             const result = await response.json();
 
-            if (response.ok && result.status) {
-                alert(result.message);
-                form.style.display = "none";
-                document.querySelector("#post-verification").classList.remove("hidden");
+            if (response.ok && result.redirect_url) {
+                window.location.href = result.redirect_url; // Redirect to the specified URL
             } else {
                 alert(result.error || "Invalid OTP. Please try again.");
             }

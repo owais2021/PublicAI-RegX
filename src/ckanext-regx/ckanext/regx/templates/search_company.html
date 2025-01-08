@@ -1,0 +1,224 @@
+{% extends "page.html" %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .modal {
+        display: none;
+        /* Hidden by default */
+        position: fixed;
+        /* Stay in place */
+        z-index: 1;
+        /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%;
+        /* Full width */
+        height: 100%;
+        /* Full height */
+        overflow: auto;
+        /* Enable scroll if needed */
+        background-color: rgb(0, 0, 0);
+        /* Fallback color */
+        background-color: rgba(0, 0, 0, 0.4);
+        /* Black w/ opacity */
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        /* 15% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        /* Could be more or less, depending on screen size */
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .search-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 50px;
+    }
+
+    .search-bar {
+        width: 500px;
+        padding: 15px;
+        font-size: 18px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        outline: none;
+    }
+
+    .search-button {
+        padding: 15px 25px;
+        font-size: 18px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        margin-left: 10px;
+        transition: background-color 0.3s ease;
+    }
+
+    .search-button:hover {
+        background-color: #0056b3;
+    }
+
+    .search-results {
+        margin-top: 50px;
+        text-align: center;
+    }
+
+    table {
+        margin: 20px auto;
+        border-collapse: collapse;
+        width: 80%;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    th,
+    td {
+        border: 1px solid #ddd;
+        padding: 12px 16px;
+        text-align: center;
+    }
+
+    th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+
+    td {
+        background-color: #ffffff;
+    }
+
+    .request-edit-btn {
+        padding: 8px 12px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+
+    .request-edit-btn:hover {
+        background-color: #218838;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="regx-container">
+    <!-- <h1>Search Company Profiles by ID</h1> -->
+    {% include "side_nav.html" %}
+    <div class="main-content">
+        <div class="search-container">
+            <form method="POST">
+                {{ h.csrf_input() }}
+                <input type="text" id="profile_id" name="profile_id" class="search-bar" placeholder="Enter Company Name"
+                    required>
+                <button type="submit" class="search-button">Search</button>
+            </form>
+        </div>
+        {% if form_submitted %}
+        {% if company %}
+        <div class="search-results">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Company Name</th>
+                        <th>Address</th>
+                        <th>Website</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in company %}
+                    <tr>
+                        <td>{{ company[0] }}</td>
+                        <td>{{ company[1] }}</td>
+                        <td><a href="{{ company[2] }}" target="_blank">{{ company[2] }}</a></td>
+                        <td>{{ company[3].strftime('%Y-%m-%d') if company[3] else 'N/A' }}</td>
+                        <td><a href="{{ url_for('regx.edit_company1')}}" class="btn btn-primary request-edit-btn">
+                                Request Edit
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="search-results">
+            <p>No company found, please try a different ID.</p>
+        </div>
+
+        {% endif %}
+        {% endif %}
+
+        <!-- Modal -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Edit Company Profile</h2>
+                <form id="editForm">
+                    <input type="hidden" id="modal-company-id" name="company_id">
+                    <label for="company_name">Company Name:</label>
+                    <input type="text" id="company_name" name="company_name">
+                    <label for="website">Website:</label>
+                    <input type="text" id="website" name="website">
+                    <label for="address">Address:</label>
+                    <input type="text" id="address" name="address">
+                    <button type="button">Update Record</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var modal = document.getElementById('editModal');
+        var span = document.getElementsByClassName('close')[0];
+
+        document.querySelectorAll('.request-edit-btnn').forEach(button => {
+            button.onclick = function () {
+                var companyId = this.getAttribute('data-company-id');
+                document.getElementById('modal-company-id').textContent = companyId;
+                modal.style.display = "block";
+            }
+        });
+
+        span.onclick = function () {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    });
+</script>
+
+{% endblock %}
