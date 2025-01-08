@@ -71,7 +71,7 @@ class ClaimProfileController:
                 session.pop('otp', None)
                 session.pop('otp_expiry', None)
                 session['otp_verified'] = True
-                return jsonify({"redirect_url": url_for('regx.edit_company')})
+                return jsonify({"redirect_url": url_for('regx.edit_company_C')})
             else:
                 return jsonify({"status": False, "error": result['message']})
         except Exception as e:

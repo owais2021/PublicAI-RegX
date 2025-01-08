@@ -146,6 +146,7 @@
                         <th>Address</th>
                         <th>Website</th>
                         <th>Created</th>
+                        <th>ID</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -156,10 +157,14 @@
                         <td>{{ company[1] }}</td>
                         <td><a href="{{ company[2] }}" target="_blank">{{ company[2] }}</a></td>
                         <td>{{ company[3].strftime('%Y-%m-%d') if company[3] else 'N/A' }}</td>
-                        <td><a href="{{ url_for('regx.edit_company1')}}" class="btn btn-primary request-edit-btn">
+                        <td>{{ company[4] }}</td>
+                        <td>
+                            <a href="{{ url_for('regx.edit_company', company_id=company[4]) }}"
+                                class="btn btn-primary request-edit-btn">
                                 Request Edit
                             </a>
                         </td>
+
                     </tr>
                     {% endfor %}
                 </tbody>

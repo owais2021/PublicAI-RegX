@@ -279,7 +279,6 @@ from ckan.plugins.interfaces import IBlueprint, IConfigurer
 from flask import Blueprint, request, render_template
 from ckanext.regx.controllers.company_controller import CompanyController
 from ckanext.regx.controllers.edit_company_controller import EditCompanyController
-from ckanext.regx.controllers.search_profiles_controller import SearchProfilesController
 from ckanext.regx.controllers.admin_controller import AdminController
 from ckanext.regx.controllers.admin_user_controller import AdminUserController
 from ckanext.regx.controllers.claim_profile_controller import ClaimProfileController
@@ -366,35 +365,20 @@ class RegxPlugin(SingletonPlugin):
             methods=['POST']
         )
 
-        # # Edit Profile
-        # blueprint.add_url_rule(
-        #     '/edit_company',
-        #     'edit_company',
-        #     EditCompanyController.edit_company,
-        #     methods=['GET']
-        # )
-        # Routes for Search Profiles
+        # Edit Profile via claim form
+        blueprint.add_url_rule(
+            '/edit_company',
+            'edit_company_C',
+            EditCompanyController.edit_company_C,
+            methods=['GET']
+        )
 
-        @blueprint.route('/search_profiles', methods=['GET'])
-        def search_profiles():
-            """
-            Page for searching company profiles.
-            """
-            return SearchProfilesController.search_profiles()
-
-        @blueprint.route('/edit_company1', methods=['GET'])
-        def edit_company1():
-            """
-            Page for searching company profiles.
-            """
-            return EditCompanyController.edit_company1()
-
-        @blueprint.route('/search_profiles/fetch', methods=['POST'])
-        def fetch_profiles():
-            return SearchProfilesController.fetch_profiles()
+        # Setup routing for the edit company page
+        @blueprint.route('/edit_company/<int:company_id>', methods=['GET', 'POST'], endpoint='edit_company')
+        def edit_companyy(company_id):
+            return EditCompanyController.edit_company(company_id)
 
         # Add route for search Company page
-
         @blueprint.route('/search_company', methods=['GET'])
         def render_search_page():
             return tk.render('search_company.html')
