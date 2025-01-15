@@ -19,7 +19,7 @@ class CompanySearchController:
                 try:
                     with connection.cursor() as cursor:
                         cursor.execute(
-                            "SELECT company_name, address, website, created, id FROM regx_company WHERE company_name LIKE %s",
+                            "SELECT company_name, email_address, website, created, id FROM regx_company WHERE company_name ILIKE %s AND status=TRUE",
                             (f"%{profile_id}%",)
                         )
                         company = cursor.fetchall()
@@ -42,7 +42,7 @@ class CompanySearchController:
             try:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "UPDATE regx_company SET company_name=%s, website=%s, address=%s, status=%s WHERE id=%s",
+                        "UPDATE regx_company SET company_name=%s, website=%s,email_ address=%s, status=%s WHERE id=%s",
                         (company_name, website, address, status, company_id)
                     )
                     connection.commit()

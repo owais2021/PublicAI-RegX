@@ -50,7 +50,7 @@ class CompanyController:
                         # Insert new company
                         cursor.execute(
                             """
-                            INSERT INTO regx_company (company_name, website, address, status)
+                            INSERT INTO regx_company (company_name, website, email_address, status)
                             VALUES (%s, %s, %s, %s)
                             """,
                             (company_name, website, address, False)

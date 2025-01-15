@@ -81,7 +81,7 @@ class OTPManager:
             if str(stored_otp) == str(entered_otp):
                 session.pop('otp', None)
                 session.pop('otp_expiry', None)
-                log.info("OTP verified successfully.")
+                log.info("OTP verified successfully. hai")
                 return {"status": True, "message": "OTP verified successfully."}
 
             log.warning("Incorrect OTP entered.")

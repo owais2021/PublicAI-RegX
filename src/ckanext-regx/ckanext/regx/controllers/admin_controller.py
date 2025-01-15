@@ -20,14 +20,14 @@ class AdminController:
                     try:
                         with connection.cursor() as cursor:
                             cursor.execute(
-                                "SELECT id, company_name, address, website, status, created FROM regx_company"
+                                "SELECT id, company_name, email_address, website, status, created FROM regx_company"
                             )
                             rows = cursor.fetchall()
                             companies = [
                                 {
                                     "id": row[0],
                                     "company_name": row[1],
-                                    "address": row[2],
+                                    "email_address": row[2],
                                     "website": row[3],
                                     "status": row[4],
                                     "created": row[5].strftime('%Y-%m-%d') if row[5] else None,

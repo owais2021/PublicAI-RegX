@@ -62,7 +62,7 @@
             columns: [
                 { data: 'id', render: (data, type, row, meta) => meta.row + 1 }, // SR No
                 { data: 'company_name' },
-                { data: 'address' },
+                { data: 'email_address' },
                 { data: 'website' },
                 {
                     data: 'status',
@@ -81,7 +81,7 @@
                                 ${row.status ? 'Deactivate' : 'Activate'}
                             </button>
                             <button class="btn btn-sm btn-info" onclick="downloadDataset(${row.id})">
-                                Download JSON
+                                Download Dataset
                             </button>
                         `;
                     }
@@ -134,7 +134,7 @@
                 <tr>
                     <th>SR No</th>
                     <th>Company Name</th>
-                    <th>Address</th>
+                    <th>Email</th>
                     <th>Website</th>
                     <th>Status</th>
                     <th>Created Date</th>

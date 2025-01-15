@@ -51,6 +51,27 @@
     .modern-form .btn-submit:hover {
         background-color: #0056b3;
     }
+
+    /* Add styles for flash messages */
+    .alert {
+        padding: 10px;
+        background-color: #f44336;
+        /* Red for errors */
+        color: white;
+        margin-bottom: 15px;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .alert-success {
+        background-color: #4CAF50;
+        /* Green for success */
+    }
+
+    .alert-info {
+        background-color: #2196F3;
+        /* Blue for general info */
+    }
 </style>
 {% endblock %}
 
@@ -59,7 +80,14 @@
     {% include "side_nav.html" %}
     <div class="main-content">
         <h1>Edit Company Details</h1>
-
+        <!-- Display Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
         <!-- Form -->
         <form action="{{ h.url_for('regx.submit_company') }}" method="post" class="modern-form">
             {{ h.csrf_input() }}

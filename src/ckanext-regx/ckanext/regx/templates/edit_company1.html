@@ -51,6 +51,11 @@
     .modern-form .btn-submit:hover {
         background-color: #0056b3;
     }
+
+    .send_otp_btn.loading {
+        background-color: #f0ad4e;
+        cursor: not-allowed;
+    }
 </style>
 {% endblock %}
 
@@ -58,26 +63,140 @@
 <div class="regx-container">
     {% include "side_nav.html" %}
     <div class="main-content">
-        <h1>Edit Company Profile</h1>
+        <h1>Edit Company Details</h1>
 
-        <!-- Form -->
-        <form action="{{ url_for('regx.edit_company', company_id=company[0]) }}" method="post" class="modern-form">
+        <!-- Combined Form -->
+        <form id="edit_company_form" action="{{ url_for('regx.edit_company', company_id=company[0]) }}" method="post"
+            class="modern-form">
             {{ h.csrf_input() }} <!-- Ensure CSRF protection -->
-            <input type="hidden" name="company_id" value="{{ company[0] }}">
+            <input type="hidden" id="company_id" name="company_id" value="{{ company[0] }}">
             <div class="form-group">
                 <label for="company_name">Company Name:</label>
-                <input type="text" name="company_name" value="{{ company[1] }}" required>
+                <input type="text" id="company_name" name="company_name" value="{{ company[1] }}" required>
             </div>
             <div class="form-group">
                 <label for="website">Website:</label>
-                <input type="url" name="website" value="{{ company[2] }}" required>
+                <input type="url" id="website" name="website" value="{{ company[2] }}" required readonly>
             </div>
             <div class="form-group">
                 <label for="address">Address:</label>
-                <input type="text" name="address" value="{{ company[3] }}" required>
+                <input type="text" id="address" name="address" value="{{ company[3] }}" required>
             </div>
-            <button type="submit" class="btn-submit">Update Record</button>
+            <div class="form-group">
+                <label for="email">Professional Email:</label>
+                <input type="email" id="email" name="email" placeholder="Enter your professional email" required>
+            </div>
+            <button type="submit" id="send_otp_btn" class="btn-submit">Send
+                OTP</button>
+
         </form>
+        <div id="otp_input_section" class="form-group" style="display: none;">
+            <form id="otp-verification_form" class="modern-form" action="/regx/verify_otp" method="post">
+                {{ h.csrf_input() }}
+                <label for="otp">Enter OTP:</label>
+                <input type="text" id="otp" name="otp" placeholder="Enter the OTP sent to your email" maxlength="4"
+                    required>
+                <button style="margin-top: 10px;" type="submit" id="verify_otp_btn" class="btn-submit">Verify
+                    OTP</button>
+            </form>
+        </div>
     </div>
+
 </div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script>
+    document.querySelector("#edit_company_form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitButton = form.querySelector("#send_otp_btn");
+
+        // Set button to loading state
+        submitButton.classList.add("loading");
+        submitButton.textContent = "Sending OTP...";
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.status) {
+                alert(result.message); // Show success message
+                form.style.display = "none"; // Hide claim profile form
+                document.getElementById("otp_input_section").style.display = "block"; // Show OTP field
+            } else {
+                alert(result.message || "An unexpected error occurred."); // Show error message
+            }
+        } catch (error) {
+            alert("An unexpected error occurred. Please try again.");
+            console.error("Error in form submission:", error);
+        } finally {
+            // Reset button state
+            submitButton.classList.remove("loading");
+            submitButton.textContent = "Send OTP";
+            submitButton.disabled = false;
+        }
+
+    });
+
+    // Handling OTP Verification
+    document.querySelector("#otp-verification_form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(this);
+
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert("OTP Verified Successfully.");
+                updateRecord();
+            } else {
+                alert(result.error || "else Invalid OTP. Please try again.");
+            }
+        } catch (error) {
+            alert("An unexpected error occurred. Please try again.");
+            console.error("Error in OTP verification:", error);
+        }
+    });
+
+
+    function updateRecord() {
+        const updateFormData = new FormData(document.querySelector("#edit_company_form"));
+        const csrfToken = updateFormData.get('csrf_token');
+        fetch('/edit_company/' + document.getElementById("company_id").value, {
+            method: 'POST',
+            body: updateFormData,
+            headers: {
+                "X-CSRFToken": csrfToken, // Include CSRF token in request headers
+            },
+            credentials: 'include' // Ensure cookies are sent with the request if needed
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+            .then(data => {
+                alert(data.message);  // Display the success or failure message from the backend
+            }).catch(error => {
+                console.error('Error updating record:', error);
+                alert('An error occurred during the update. Please try again.');
+            });
+    }
+
+
+</script>
+
 {% endblock %}

@@ -276,7 +276,7 @@ import logging
 from ckan.plugins import SingletonPlugin, implements
 from ckan.plugins import toolkit as tk
 from ckan.plugins.interfaces import IBlueprint, IConfigurer
-from flask import Blueprint, request, render_template
+from flask import Blueprint, request, render_template, session
 from ckanext.regx.controllers.company_controller import CompanyController
 from ckanext.regx.controllers.edit_company_controller import EditCompanyController
 from ckanext.regx.controllers.admin_controller import AdminController
@@ -360,25 +360,51 @@ class RegxPlugin(SingletonPlugin):
 
         blueprint.add_url_rule(
             '/verify_otp',
-            'verify_otp',
+            'verifyy_otp',
             ClaimProfileController.verify_otp,
             methods=['POST']
         )
 
         # Edit Profile via claim form
-        blueprint.add_url_rule(
-            '/edit_company',
-            'edit_company_C',
-            EditCompanyController.edit_company_C,
-            methods=['GET']
-        )
+        # blueprint.add_url_rule(
+        #     '/edit_company',
+        #     'edit_company_C',
+        #     EditCompanyController.edit_company_C,
+        #     methods=['GET']
+        # )
+
+        @blueprint.route('/update_claim_form/<int:company_id>', methods=['GET', 'POST'])
+        def update_claim_form(company_id):
+            if request.method == 'POST':
+                return ClaimProfileController.update_record(company_id)
+            else:
+                return ClaimProfileController.fetch_record(company_id)
+
+        # # Setup routing for the edit company page
+        # @blueprint.route('/edit_company/<int:company_id>', methods=['GET', 'POST'], endpoint='edit_company')
+        # def edit_company(company_id):
+        #     return EditCompanyController.edit_company(company_id)
+        # blueprint.add_url_rule('/request_otp/<int:company_id>', 'request_otp',
+        #                        EditCompanyController.request_otp, methods=['POST'])
+
+        # blueprint.add_url_rule('/verify_otp/<int:company_id>', 'verifyy_otp',
+        #                        EditCompanyController.verify_otp, methods=['POST'])
 
         # Setup routing for the edit company page
+
         @blueprint.route('/edit_company/<int:company_id>', methods=['GET', 'POST'], endpoint='edit_company')
-        def edit_companyy(company_id):
+        def edit_company(company_id):
+            session['company_id'] = company_id
             return EditCompanyController.edit_company(company_id)
 
+        blueprint.add_url_rule(
+            '/verify_otp',
+            'verify_otp',
+            EditCompanyController.verify_otp,
+            methods=['POST'])
+
         # Add route for search Company page
+
         @blueprint.route('/search_company', methods=['GET'])
         def render_search_page():
             return tk.render('search_company.html')
@@ -390,7 +416,7 @@ class RegxPlugin(SingletonPlugin):
             CompanySearchController.search_company,
             methods=['POST']
         )
-        # Route to handle updates
+        # Route to handle updates EXTRA I THINK
         blueprint.add_url_rule(
             '/update_company',
             'update_company',
@@ -398,7 +424,7 @@ class RegxPlugin(SingletonPlugin):
             methods=['POST']
         )
 
-    # Admin Panel Routes
+    # Admin Side Routes
         @blueprint.route('/admin_all_profiles')
         def admin_all_profiles():
             """
