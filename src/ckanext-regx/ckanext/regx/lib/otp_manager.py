@@ -20,7 +20,7 @@ class OTPManager:
             otp = random.randint(1000, 9999)
             session['otp'] = otp
             session['otp_expiry'] = (
-                datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S')
+                datetime.now() + timedelta(minutes=1)).strftime('%Y-%m-%d %H:%M:%S')
             session['email'] = email
 
             # Load SMTP configuration

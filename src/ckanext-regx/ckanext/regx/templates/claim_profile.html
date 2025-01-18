@@ -102,6 +102,7 @@
             const result = await response.json();
 
             if (response.ok && result.redirect_url) {
+                alert(result.message); // Show success message
                 window.location.href = result.redirect_url; // Redirect to the specified URL
             } else {
                 alert(result.error || "Invalid OTP. Please try again.");

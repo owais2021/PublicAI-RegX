@@ -276,7 +276,8 @@ import logging
 from ckan.plugins import SingletonPlugin, implements
 from ckan.plugins import toolkit as tk
 from ckan.plugins.interfaces import IBlueprint, IConfigurer
-from flask import Blueprint, request, render_template, session
+from functools import wraps
+from flask import Blueprint, request, render_template, session, abort
 from ckanext.regx.controllers.company_controller import CompanyController
 from ckanext.regx.controllers.edit_company_controller import EditCompanyController
 from ckanext.regx.controllers.admin_controller import AdminController
@@ -311,6 +312,15 @@ class RegxPlugin(SingletonPlugin):
             # If the page requires admin access and the user is not admin, return 404
             tk.abort(404, "Page not found")
 
+    def otp_required(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'otp_verified' not in session or not session['otp_verified']:
+                # Return a 404 Not Found error instead of redirecting
+                abort(404)
+            return f(*args, **kwargs)
+        return decorated_function
+
     def get_blueprint(self):
         blueprint = Blueprint(
             'regx',
@@ -322,6 +332,7 @@ class RegxPlugin(SingletonPlugin):
         )
 
         # Index route
+
         @blueprint.route('/')
         def index():
             """
@@ -345,9 +356,6 @@ class RegxPlugin(SingletonPlugin):
         # Claim Your Profile Routes
         @blueprint.route('/claim_profile', methods=['GET'])
         def claim_profile():
-            """
-            Route to render claim profile form.
-            """
             log.debug("Accessing Claim Profile page.")
             return ClaimProfileController.claim_profile()
 
@@ -365,20 +373,15 @@ class RegxPlugin(SingletonPlugin):
             methods=['POST']
         )
 
-        # Edit Profile via claim form
-        # blueprint.add_url_rule(
-        #     '/edit_company',
-        #     'edit_company_C',
-        #     EditCompanyController.edit_company_C,
-        #     methods=['GET']
-        # )
-
         @blueprint.route('/update_claim_form/<int:company_id>', methods=['GET', 'POST'])
         def update_claim_form(company_id):
-            if request.method == 'POST':
-                return ClaimProfileController.update_record(company_id)
+            if 'otp_verified' in session:
+                if request.method == 'POST':
+                    return ClaimProfileController.update_record(company_id)
+                else:
+                    return ClaimProfileController.fetch_record(company_id)
             else:
-                return ClaimProfileController.fetch_record(company_id)
+                abort(404)
 
         # # Setup routing for the edit company page
         # @blueprint.route('/edit_company/<int:company_id>', methods=['GET', 'POST'], endpoint='edit_company')
@@ -394,7 +397,7 @@ class RegxPlugin(SingletonPlugin):
 
         @blueprint.route('/edit_company/<int:company_id>', methods=['GET', 'POST'], endpoint='edit_company')
         def edit_company(company_id):
-            session['company_id'] = company_id
+            session['c_id'] = company_id
             return EditCompanyController.edit_company(company_id)
 
         blueprint.add_url_rule(
@@ -417,12 +420,12 @@ class RegxPlugin(SingletonPlugin):
             methods=['POST']
         )
         # Route to handle updates EXTRA I THINK
-        blueprint.add_url_rule(
-            '/update_company',
-            'update_company',
-            CompanySearchController.update_company,
-            methods=['POST']
-        )
+        # blueprint.add_url_rule(
+        #     '/update_company',
+        #     'update_company',
+        #     CompanySearchController.update_company,
+        #     methods=['POST']
+        # )
 
     # Admin Side Routes
         @blueprint.route('/admin_all_profiles')

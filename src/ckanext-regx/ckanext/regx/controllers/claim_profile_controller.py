@@ -4,6 +4,8 @@ from ckanext.regx.lib.otp_manager import OTPManager
 from ckanext.regx.lib.database import connect_to_db, close_db_connection
 import logging
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
 
 
@@ -74,12 +76,17 @@ class ClaimProfileController:
             conn = connect_to_db()
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, company_name, website, email_address FROM regx_company WHERE website = %s", (website,))
+                "SELECT id, company_name, website, email_address, status FROM regx_company WHERE website = %s", (website,))
             company = cursor.fetchone()
 
             if not company:
                 log.info(f"Website {website} not found in database.")
                 return jsonify({"status": False, "message": "Website not registered."})
+
+            # Check if the status is false
+            if not company[4]:
+                log.info(f"Website {website} is inactive. Cannot proceed.")
+                return jsonify({"status": False, "message": "The company record is inactive and cannot be processed."})
 
             # Store the company ID in the session
             session['company_id'] = company[0]
@@ -130,7 +137,7 @@ class ClaimProfileController:
                 session['otp_verified'] = True
                 log.info("Results bracket my aya hau.")
                 log.info(company_id)
-                return jsonify({"redirect_url": url_for('regx.update_claim_form', company_id=company_id)})
+                return jsonify({"status": True, "message": "OTP Verified Successfully", "redirect_url": url_for('regx.update_claim_form', company_id=company_id)})
             else:
                 return jsonify({"status": False, "error": result['message']})
         except Exception as e:
@@ -157,6 +164,47 @@ class ClaimProfileController:
 
     @staticmethod
     def update_record(company_id):
-        """Updates company details in the database based on form input."""
-        # This function will be implemented later
-        return "Update functionality to be implemented."
+
+        conn = None
+        cursor = None
+        try:
+            if request.method == 'POST':
+                company_name = request.form['company_name']
+                website = request.form['website']
+                email_address = request.form['email_address']
+                # Continue with domain validation if the website is found
+                website_domain = website.split(
+                    '//')[-1].split('/')[0].replace('www.', '')
+                email_domain = email_address.split('@')[-1]
+
+                if website_domain != email_domain:
+                    log.warning(f"Website domain {website_domain} does not match email domain {email_domain}.")  # noqa
+                    return jsonify({"status": False, "message": "Website and email domains do not match."})
+
+                conn = connect_to_db()
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE regx_company
+                    SET company_name = %s, email_address = %s, status = False
+                    WHERE id = %s
+                """, (company_name, email_address, company_id))
+
+                # Commit changes and handle exceptions
+                conn.commit()
+                session.pop('otp_verified', None)
+                session.pop('company_id', None)
+                session.modified = True
+                return jsonify({"status": True, "message": "Update Request Submitted Successfully", "redirect_url": url_for('regx.search_company')})
+
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            flash('Failed to update company details.')
+            print(e)  # Log the error for debugging
+            return redirect(url_for('regx.update_claim_form', company_id=company_id))
+
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                close_db_connection(conn)

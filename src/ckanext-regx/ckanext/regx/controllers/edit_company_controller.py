@@ -113,6 +113,6 @@ class EditCompanyController:
                     # Clear the OTP verified status
                     session.pop('otp_verified')
                     session.pop('email')  # Clear the email from session
-                    session.clear()  # Clear session variables after update
+                    # Session sy c_id b clear krni hai
             return jsonify({'status': False, 'message': 'Failed to update record'})
         return jsonify({'status': False, 'message': 'OTP verification required'})
