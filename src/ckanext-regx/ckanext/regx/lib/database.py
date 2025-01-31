@@ -35,6 +35,8 @@ def connect_to_db():
         log.error(f"Database connection failed: {e}")
         return None
 
+# Extra
+
 
 def create_sherry_table(connection):
     """
@@ -80,6 +82,28 @@ def create_company_table(connection):
     except Exception as e:
         connection.rollback()
         log.error(f"Error creating table 'regx_company': {e}")
+
+
+def create_claimant_table(connection):
+    create_table_query = """
+        CREATE TABLE IF NOT EXISTS regx_claimants (
+            id SERIAL PRIMARY KEY,
+            company_name TEXT NULL,
+            website TEXT  NULL,
+            email_address TEXT NULL,
+            claimant_email TEXT NULL,
+            claimant_role TEXT NULL,
+            created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(create_table_query)
+            connection.commit()
+            log.info("Table 'regx_claimants' created successfully!")
+    except Exception as e:
+        connection.rollback()
+        log.error(f"Error creating table 'regx_claimants': {e}")
 
 
 def close_db_connection(connection):

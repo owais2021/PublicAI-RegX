@@ -57,6 +57,7 @@
         cursor: not-allowed;
     }
 </style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -173,28 +174,24 @@
 
 
     function updateRecord() {
-        const updateFormData = new FormData(document.querySelector("#edit_company_form"));
-        const csrfToken = updateFormData.get('csrf_token');
-        fetch('/edit_company/' + document.getElementById("company_id").value, {
-            method: 'POST',
-            body: updateFormData,
-            headers: {
-                "X-CSRFToken": csrfToken, // Include CSRF token in request headers
+        const updateFormData = $("#edit_company_form").serialize();  // Serialize form data for submission
+        const companyId = $("#company_id").val();
+        console.log("update functin my aya hai");
+        $.ajax({
+            url: '/regx/edit_company/' + companyId,
+            type: 'POST',
+            data: updateFormData,
+            success: function (response) {
+                alert(response.message);  // Display the success or failure message from the backend
+                window.location.href = response.redirect_url;
             },
-            credentials: 'include' // Ensure cookies are sent with the request if needed
-        }).then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-            .then(data => {
-                alert(data.message);  // Display the success or failure message from the backend
-            }).catch(error => {
+            error: function (xhr, status, error) {
                 console.error('Error updating record:', error);
                 alert('An error occurred during the update. Please try again.');
-            });
+            }
+        });
     }
+
 
 
 </script>

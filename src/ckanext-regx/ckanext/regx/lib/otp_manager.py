@@ -81,6 +81,7 @@ class OTPManager:
             if str(stored_otp) == str(entered_otp):
                 session.pop('otp', None)
                 session.pop('otp_expiry', None)
+                session['otp_verified'] = True
                 log.info("OTP verified successfully. hai")
                 return {"status": True, "message": "OTP verified successfully."}
 

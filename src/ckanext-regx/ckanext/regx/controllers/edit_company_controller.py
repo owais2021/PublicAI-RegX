@@ -27,13 +27,13 @@ class EditCompanyController:
     @staticmethod
     def edit_company(company_id):
         if request.method == 'POST':
-            if 'email' in request.form:  # Assuming sending OTP
+            log.info(f"'otp_verified' in session: {session.get('otp_verified')}")  # noqa
+            if 'email' in request.form:
+                if session.get('otp_verified', False):
+                    return EditCompanyController.update_record(company_id)
                 return EditCompanyController.send_otp()
-            elif 'otp' in request.form:  # Assuming verifying OTP
+            if 'otp' in request.form:  # Assuming verifying OTP
                 return EditCompanyController.verify_otp(company_id)
-            # Proceed to update only if OTP is verified
-            elif session.get('otp_verified'):
-                return EditCompanyController.update_record(company_id)
         else:
             company = EditCompanyController.get_company(company_id)
             if company:
@@ -82,7 +82,8 @@ class EditCompanyController:
 
             result = OTPManager.verify_otp(entered_otp)
             if result['status']:
-                session['otp_verified'] = True
+                # session['otp_verified'] = True
+                log.info(f"'otp_verified' in session: {session.get('otp_verified')}")  # noqa
                 log.info("Results bracket my aya hau.")
                 return jsonify({"status": True, "message": "Message here", "update_needed": True})
             else:
@@ -107,12 +108,12 @@ class EditCompanyController:
                             "UPDATE regx_company SET company_name=%s, website=%s, email_address=%s, status=%s WHERE id=%s",
                             (company_name, website, company_email_address, status, company_id))
                         connection.commit()
-                        return jsonify({"status": True, "message": "Record updated successfully"})
+                        return jsonify({"status": True, "message": "Record updated successfully", "redirect_url": url_for('regx.search_company')})
                 finally:
                     close_db_connection(connection)
                     # Clear the OTP verified status
                     session.pop('otp_verified')
-                    session.pop('email')  # Clear the email from session
-                    # Session sy c_id b clear krni hai
+                    session.pop('email')
+                    # c_id b pop krni
             return jsonify({'status': False, 'message': 'Failed to update record'})
         return jsonify({'status': False, 'message': 'OTP verification required'})

@@ -66,6 +66,7 @@ class ClaimProfileController:
         try:
             website = request.form.get('website', '').strip().lower()
             email = request.form.get('email', '').strip().lower()
+            role = request.form.get('role')
 
             if not website or not email:
                 log.warning(
@@ -91,6 +92,7 @@ class ClaimProfileController:
             # Store the company ID in the session
             session['company_id'] = company[0]
             log.debug(f"Website {website} found with details: {company}.")
+            log.debug(f"Role{role}")
             close_db_connection(conn)
 
             # Continue with domain validation if the website is found
@@ -106,7 +108,8 @@ class ClaimProfileController:
             otp_sent = OTPManager.generate_and_send_otp(email)
             if otp_sent:
                 # Store email in session for later verification
-                session['email'] = email
+                session['c_email'] = email
+                session['role'] = role
                 log.info(f"OTP sent successfully to {email}.")
                 return jsonify({"status": True, "message": "OTP sent successfully. Check your email."})
             else:
@@ -164,44 +167,48 @@ class ClaimProfileController:
 
     @staticmethod
     def update_record(company_id):
+        if request.method != 'POST':
+            return jsonify({"status": False, "message": "Invalid request method."})
 
-        conn = None
-        cursor = None
         try:
-            if request.method == 'POST':
-                company_name = request.form['company_name']
-                website = request.form['website']
-                email_address = request.form['email_address']
-                # Continue with domain validation if the website is found
-                website_domain = website.split(
-                    '//')[-1].split('/')[0].replace('www.', '')
-                email_domain = email_address.split('@')[-1]
+            company_name = request.form['company_name']
+            website = request.form['website']
+            email_address = request.form['email_address']
+            claimant_email = session.get('c_email')
+            claimant_role = session.get('role')
 
-                if website_domain != email_domain:
-                    log.warning(f"Website domain {website_domain} does not match email domain {email_domain}.")  # noqa
-                    return jsonify({"status": False, "message": "Website and email domains do not match."})
+            website_domain = website.split(
+                '//')[-1].split('/')[0].replace('www.', '')
+            email_domain = email_address.split('@')[-1]
 
-                conn = connect_to_db()
-                cursor = conn.cursor()
+            if website_domain != email_domain:
+                log.warning(f"Website domain {website_domain} does not match email domain {email_domain}.")  # noqa
+                return jsonify({"status": False, "message": "Website and email domains do not match."})
+
+            with connect_to_db() as conn, conn.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO regx_claimants (company_name, website, email_address, claimant_email, claimant_role)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (company_name, website, email_address, claimant_email, claimant_role))
                 cursor.execute("""
                     UPDATE regx_company
                     SET company_name = %s, email_address = %s, status = False
                     WHERE id = %s
                 """, (company_name, email_address, company_id))
-
-                # Commit changes and handle exceptions
                 conn.commit()
-                session.pop('otp_verified', None)
-                session.pop('company_id', None)
-                session.modified = True
-                return jsonify({"status": True, "message": "Update Request Submitted Successfully", "redirect_url": url_for('regx.search_company')})
+
+            session.pop('otp_verified', None)
+            session.pop('company_id', None)
+            session.pop('email', None)
+            session.pop('role', None)
+
+            return jsonify({"status": True, "message": "Update Request Submitted Successfully", "redirect_url": url_for('regx.search_company')})
 
         except Exception as e:
+            log.error(f"Failed to update company details: {e}")
             if conn:
                 conn.rollback()
-            flash('Failed to update company details.')
-            print(e)  # Log the error for debugging
-            return redirect(url_for('regx.update_claim_form', company_id=company_id))
+            return jsonify({"status": False, "message": "Failed to update company details."})
 
         finally:
             if cursor:

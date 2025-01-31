@@ -395,10 +395,19 @@ class RegxPlugin(SingletonPlugin):
 
         # Setup routing for the edit company page
 
-        @blueprint.route('/edit_company/<int:company_id>', methods=['GET', 'POST'], endpoint='edit_company')
+        @blueprint.route('/edit_company/<int:company_id>', methods=['GET', 'POST'])
         def edit_company(company_id):
-            session['c_id'] = company_id
+            log.info("Request method received: " + request.method)
+            if request.method == 'POST':
+                log.info("Handling POST request")
+                # Handle POST logic here
             return EditCompanyController.edit_company(company_id)
+
+        # @blueprint.route('/edit_company/<int:company_id>', methods=['GET', 'POST'], endpoint='edit_company')
+        # def edit_company(company_id):
+        #     log.info("Andr aya  hmmhai")
+        #     session['c_id'] = company_id
+        #     return EditCompanyController.edit_company(company_id)
 
         blueprint.add_url_rule(
             '/verify_otp',
