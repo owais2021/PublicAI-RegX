@@ -3,6 +3,7 @@
 {% block styles %}
 {{ super() }}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 <style>
     .dataTable {
         width: 100%;
@@ -41,6 +42,10 @@
         background-color: #17a2b8;
         color: white;
     }
+
+    .fa {
+        padding-right: 5px;
+    }
 </style>
 {% endblock %}
 
@@ -49,10 +54,8 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
-    jQuery.noConflict();
     jQuery(document).ready(function ($) {
         const csrfToken = $('input[name="_csrf_token"]').val();
-
         $('#profilesTable').DataTable({
             ajax: {
                 url: '/regx/admin_all_profiles',
@@ -60,8 +63,18 @@
                 dataSrc: 'data'
             },
             columns: [
-                { data: 'id', render: (data, type, row, meta) => meta.row + 1 }, // SR No
-                { data: 'company_name' },
+                { data: 'id', render: (data, type, row, meta) => meta.row + 1 },
+                {
+                    data: 'company_name',
+                    render: function (data, type, row) {
+                        let alternativeNamesHtml = '';
+                        if (row.alternative_names && row.alternative_names.length > 0) {
+                            const namesList = row.alternative_names.map(name => `<li>${name}</li>`).join('');
+                            alternativeNamesHtml = `<strong>Alternative Names:</strong><ul>${namesList}</ul>`;
+                        }
+                        return `${data}<br>${alternativeNamesHtml}`;
+                    }
+                },
                 { data: 'email_address' },
                 { data: 'website' },
                 {
@@ -70,7 +83,7 @@
                         return data ? 'Active' : 'Inactive';
                     }
                 },
-                { data: 'created' }, // Created Date
+                { data: 'created' },
                 {
                     data: null,
                     render: function (data, type, row) {
@@ -85,10 +98,18 @@
                             </button>
                         `;
                     }
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `<a href="/regx/view_profile/${row.id}" target="_blank" class="btn btn-sm btn-success">
+                                    <i class="fas fa-eye"></i>
+                                </a>`;
+                    },
+                    orderable: false
                 }
             ]
         });
-
         // Toggle Status Button
         $('#profilesTable').on('click', '.btn-status', function () {
             const button = $(this);
@@ -115,7 +136,6 @@
             });
         });
     });
-
     function downloadDataset(companyId) {
         window.location.href = `/regx/download_dataset/${companyId}`;
     }
@@ -139,6 +159,7 @@
                     <th>Status</th>
                     <th>Created Date</th>
                     <th>Actions</th>
+                    <th>View Profile</th>
                 </tr>
             </thead>
             <tbody></tbody>

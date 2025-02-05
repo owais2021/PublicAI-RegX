@@ -10,18 +10,20 @@ log = logging.getLogger(__name__)
 class AdminController:
     @staticmethod
     def admin_all_profiles():
-        """
-        Render the admin profiles page or return JSON data for AJAX requests.
-        """
         try:
             if "application/json" in request.headers.get("Accept", ""):
                 connection = connect_to_db()
                 if connection:
                     try:
                         with connection.cursor() as cursor:
-                            cursor.execute(
-                                "SELECT id, company_name, email_address, website, status, created FROM regx_company"
-                            )
+                            cursor.execute("""
+                                SELECT c.id, c.company_name, c.email_address, c.website, c.status, c.created,
+                                       array_agg(a.alternative_name) FILTER (WHERE a.alternative_name IS NOT NULL) AS alternative_names
+                                FROM regx_company c
+                                LEFT JOIN regx_alternative_names a ON c.id = a.company_id
+                                GROUP BY c.id
+                                ORDER BY c.created DESC
+                            """)
                             rows = cursor.fetchall()
                             companies = [
                                 {
@@ -31,6 +33,7 @@ class AdminController:
                                     "website": row[3],
                                     "status": row[4],
                                     "created": row[5].strftime('%Y-%m-%d') if row[5] else None,
+                                    "alternative_names": row[6] if row[6] else []
                                 }
                                 for row in rows
                             ]

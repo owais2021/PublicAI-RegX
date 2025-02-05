@@ -1,0 +1,187 @@
+{% extends "page.html" %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #0b7a8b, #17a2b8);
+        padding: 40px 20px;
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .initials-avatar {
+        width: 100px;
+        height: 100px;
+        font-size: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        backdrop-filter: blur(5px);
+    }
+
+    .profile-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin-top: 25px;
+    }
+
+    .detail-item {
+        padding: 15px 0;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-weight: 500;
+        color: #666;
+        flex: 1;
+    }
+
+    .detail-value {
+        flex: 2;
+        color: #333;
+        text-align: right;
+    }
+
+    .status-badge {
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 500;
+    }
+
+    .alt-name-list {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+
+    .alt-name-item {
+        background: #f3f4f6;
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+    }
+
+    .download-section {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .btn-download {
+        background: linear-gradient(135deg, #0b7a8b, #17a2b8);
+        color: white;
+        padding: 12px 35px;
+        border-radius: 30px;
+        border: none;
+        font-size: 1.1em;
+        transition: transform 0.2s ease;
+    }
+
+    .btn-download:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(11, 122, 139, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="regx-container">
+    {% include "side_nav.html" %}
+
+    <!-- <div class="profile-header">
+        <div class="initials-avatar">{{ company_name|first|upper }}{{ company_name|last|upper }}</div>
+        <h1 class="mb-3">{{ company_name }}</h1>
+        <span class="status-badge {{ 'bg-success' if status else 'bg-danger' }}">
+            {{ status|title }} STATUS
+        </span>
+    </div> -->
+
+
+
+    <div class="container">
+        <div class="profile-card">
+            <h1>Company Name</h1>
+
+        </div>
+        <div class="profile-card">
+            <h4 class="mb-4">Company Details</h4>
+            <div class="info-grid">
+                <div class="detail-item">
+                    <span class="detail-label" style="font-weight: bold;">Official Email:</span>
+                    <span class="detail-value">contact@example.com</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label" style="font-weight: bold;">Website:</span>
+                    <span class="detail-value">www.example.com</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label" style="font-weight: bold;">Created Date:</span>
+                    <span class="detail-value">2023-01-01</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-card">
+            <h4 class="mb-4">Alternative Names</h4>
+            <div class="alt-name-list">
+                <!-- Dynamic alternative names would go here -->
+                <span class="alt-name-item">ABC Corp</span>
+                <span class="alt-name-item">XYZ Corp</span>
+                <span class="alt-name-item">Global Enterprises</span>
+            </div>
+        </div>
+
+        <div class="profile-card">
+            <h4 class="mb-4">Claimant Information</h4>
+            <div class="info-grid">
+                <div class="detail-item">
+                    <span class="detail-label" style="font-weight: bold;">Claimant Email:</span>
+                    <span class="detail-value">user@example.com</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label" style="font-weight: bold;">Claimant Role:</span>
+                    <span class="detail-value">Administrator</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="download-section">
+            <button class="btn-download" onclick="downloadDataset()">
+                <i class="fas fa-download me-2"></i>Download Full Dataset
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function downloadDataset() {
+        window.location.href = "/regx/download_dataset/1";
+    }
+</script>
+{% endblock %}
