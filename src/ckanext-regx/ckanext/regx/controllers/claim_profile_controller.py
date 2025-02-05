@@ -77,7 +77,7 @@ class ClaimProfileController:
             conn = connect_to_db()
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, company_name, website, email_address, status FROM regx_company WHERE website = %s", (website,))
+                "SELECT id, company_name, website, email_address, status, claimant FROM regx_company WHERE website = %s", (website,))
             company = cursor.fetchone()
 
             if not company:
@@ -88,6 +88,11 @@ class ClaimProfileController:
             if not company[4]:
                 log.info(f"Website {website} is inactive. Cannot proceed.")
                 return jsonify({"status": False, "message": "The company record is inactive and cannot be processed."})
+
+            # Check if it already has claimant
+            if company[5]:
+                log.info(f"Website {website} found cla")
+                return jsonify({"status": False, "message": "This Profiile is already claimed, Please contact admin for further queries"})
 
             # Store the company ID in the session
             session['company_id'] = company[0]
@@ -171,30 +176,16 @@ class ClaimProfileController:
             return jsonify({"status": False, "message": "Invalid request method."})
 
         try:
-            company_name = request.form['company_name']
-            website = request.form['website']
-            email_address = request.form['email_address']
             claimant_email = session.get('c_email')
             claimant_role = session.get('role')
 
-            website_domain = website.split(
-                '//')[-1].split('/')[0].replace('www.', '')
-            email_domain = email_address.split('@')[-1]
-
-            if website_domain != email_domain:
-                log.warning(f"Website domain {website_domain} does not match email domain {email_domain}.")  # noqa
-                return jsonify({"status": False, "message": "Website and email domains do not match."})
-
             with connect_to_db() as conn, conn.cursor() as cursor:
-                cursor.execute("""
-                    INSERT INTO regx_claimants (company_name, website, email_address, claimant_email, claimant_role)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (company_name, website, email_address, claimant_email, claimant_role))
+
                 cursor.execute("""
                     UPDATE regx_company
-                    SET company_name = %s, email_address = %s, status = False
+                    SET claimant = %s, claimant_role = %s, status = False
                     WHERE id = %s
-                """, (company_name, email_address, company_id))
+                """, (claimant_email, claimant_role, company_id))
                 conn.commit()
 
             session.pop('otp_verified', None)
@@ -202,7 +193,7 @@ class ClaimProfileController:
             session.pop('email', None)
             session.pop('role', None)
 
-            return jsonify({"status": True, "message": "Update Request Submitted Successfully", "redirect_url": url_for('regx.search_company')})
+            return jsonify({"status": True, "message": "Claim Request Submitted Successfully", "redirect_url": url_for('regx.search_company')})
 
         except Exception as e:
             log.error(f"Failed to update company details: {e}")
@@ -215,3 +206,55 @@ class ClaimProfileController:
                 cursor.close()
             if conn:
                 close_db_connection(conn)
+
+
+# @staticmethod
+#     def update_record(company_id):
+#         if request.method != 'POST':
+#             return jsonify({"status": False, "message": "Invalid request method."})
+
+#         try:
+#             company_name = request.form['company_name']
+#             website = request.form['website']
+#             email_address = request.form['email_address']
+#             claimant_email = session.get('c_email')
+#             claimant_role = session.get('role')
+
+#             website_domain = website.split(
+#                 '//')[-1].split('/')[0].replace('www.', '')
+#             email_domain = email_address.split('@')[-1]
+
+#             if website_domain != email_domain:
+#                 log.warning(f"Website domain {website_domain} does not match email domain {email_domain}.")  # noqa
+#                 return jsonify({"status": False, "message": "Website and email domains do not match."})
+
+#             with connect_to_db() as conn, conn.cursor() as cursor:
+#                 cursor.execute("""
+#                     INSERT INTO regx_claimants (company_name, website, email_address, claimant_email, claimant_role)
+#                     VALUES (%s, %s, %s, %s, %s)
+#                 """, (company_name, website, email_address, claimant_email, claimant_role))
+#                 cursor.execute("""
+#                     UPDATE regx_company
+#                     SET company_name = %s, email_address = %s, status = False
+#                     WHERE id = %s
+#                 """, (company_name, email_address, company_id))
+#                 conn.commit()
+
+#             session.pop('otp_verified', None)
+#             session.pop('company_id', None)
+#             session.pop('email', None)
+#             session.pop('role', None)
+
+#             return jsonify({"status": True, "message": "Update Request Submitted Successfully", "redirect_url": url_for('regx.search_company')})
+
+#         except Exception as e:
+#             log.error(f"Failed to update company details: {e}")
+#             if conn:
+#                 conn.rollback()
+#             return jsonify({"status": False, "message": "Failed to update company details."})
+
+#         finally:
+#             if cursor:
+#                 cursor.close()
+#             if conn:
+#                 close_db_connection(conn)

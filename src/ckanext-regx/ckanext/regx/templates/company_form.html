@@ -39,7 +39,7 @@
 
     .modern-form .btn-submit {
         display: inline-block;
-        background-color: #007bff;
+        background-color: #0b7a8b;
         color: #fff;
         padding: 10px 20px;
         font-size: 16px;
@@ -50,6 +50,15 @@
 
     .modern-form .btn-submit:hover {
         background-color: #0056b3;
+    }
+
+    .form-columns {
+        display: flex;
+        gap: 20px;
+    }
+
+    .form-column {
+        flex: 1;
     }
 
     /* Add styles for flash messages */
@@ -72,6 +81,43 @@
         background-color: #2196F3;
         /* Blue for general info */
     }
+
+    /* Add these new styles BELOW existing ones */
+    .dynamic-alt-name {
+        position: relative;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .add-alt-name {
+        background: #0b7a8b;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .remove-alt-name {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .dynamic-alt-name input {
+        flex-grow: 1;
+        min-width: 0;
+        /* Fix flex item overflow */
+    }
 </style>
 {% endblock %}
 
@@ -79,8 +125,7 @@
 <div class="regx-container">
     {% include "side_nav.html" %}
     <div class="main-content">
-        <h1>Edit Company Details</h1>
-        <!-- Display Flash Messages -->
+        <h1>Create Company </h1>
         {% with messages = get_flashed_messages(with_categories=True) %}
         {% if messages %}
         {% for category, message in messages %}
@@ -88,23 +133,81 @@
         {% endfor %}
         {% endif %}
         {% endwith %}
-        <!-- Form -->
+
         <form action="{{ h.url_for('regx.submit_company') }}" method="post" class="modern-form">
             {{ h.csrf_input() }}
-            <div class="form-group">
-                <label for="company_name">Company Name</label>
-                <input type="text" id="company_name" name="company_name" placeholder="Enter company name" required />
+
+            <div class="form-columns">
+                <!-- First Column -->
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="company_name">Company Name</label>
+                        <input type="text" id="company_name" name="company_name" placeholder="Enter company name"
+                            required />
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Official Email</label>
+                        <input type="email" id="official_email" name="official_email" placeholder="name@example.com"
+                            required />
+                    </div>
+                </div>
+
+                <!-- Second Column -->
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="website">Website</label>
+                        <input type="url" id="website" name="website" placeholder="https://example.com" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="your_email">Your Email</label>
+                        <input type="email" id="your_email" name="your_email" placeholder="your.email@example.com"
+                            required />
+                    </div>
+                </div>
             </div>
+
+            <!-- Full Width Below Columns -->
             <div class="form-group">
-                <label for="website">Website</label>
-                <input type="url" id="website" name="website" placeholder="https://example.com" required />
+                <label for="role">Your Role</label>
+                <input type="text" id="role" name="role" placeholder="Enter your role in the company" required />
             </div>
+
+            <!-- Dynamic Alternative Names Section -->
             <div class="form-group">
-                <label for="address">Offical Email</label>
-                <input type="email" id="address" name="address" placeholder="name@example.com" required />
+                <label>
+                    Alternative Company Names
+                    <button type="button" class="add-alt-name" onclick="addAltName()">+</button>
+                </label>
+                <div id="altNamesContainer">
+                    <div class="dynamic-alt-name">
+                        <input type="text" name="alt_names[]" placeholder="Alternative company name" />
+                        <button type="button" class="remove-alt-name" onclick="removeAltName(this)">−</button>
+                    </div>
+                </div>
             </div>
+
             <button type="submit" class="btn-submit">Submit</button>
         </form>
     </div>
 </div>
+
+<script>
+    function addAltName() {
+        const container = document.getElementById('altNamesContainer');
+        const newField = document.createElement('div');
+        newField.className = 'dynamic-alt-name';
+        newField.innerHTML = `
+            <input type="text" name="alt_names[]" placeholder="Alternative company name" />
+            <button type="button" class="remove-alt-name" onclick="removeAltName(this)">−</button>
+        `;
+        container.appendChild(newField);
+    }
+
+    function removeAltName(button) {
+        const fields = document.querySelectorAll('.dynamic-alt-name');
+        if (fields.length > 1) {
+            button.closest('.dynamic-alt-name').remove();
+        }
+    }
+</script>
 {% endblock %}

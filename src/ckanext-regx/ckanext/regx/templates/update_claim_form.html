@@ -40,7 +40,7 @@
 
     .modern-form .btn-submit {
         display: inline-block;
-        background-color: #007bff;
+        background-color: #0b7a8b;
         color: #fff;
         padding: 10px 20px;
         font-size: 16px;
@@ -65,7 +65,7 @@
             {{ h.csrf_input() }}
             <div class="form-group">
                 <label for="company_name">Company Name</label>
-                <input type="text" id="company_name" name="company_name" value="{{ company_obj[1] }}" required>
+                <input type="text" id="company_name" name="company_name" value="{{ company_obj[1] }}" required readonly>
             </div>
             <div class="form-group">
                 <label for="website">Website</label>
@@ -73,9 +73,10 @@
             </div>
             <div class="form-group">
                 <label for="email_address">Company Email</label>
-                <input type="email" id="email_address" name="email_address" value="{{ company_obj[3] }}" required>
+                <input type="email" id="email_address" name="email_address" value="{{ company_obj[3] }}" required
+                    readonly>
             </div>
-            <button type="submit" id='update_claim_btn' class="btn-submit">Update Record</button>
+            <button type="submit" id='update_claim_btn' class="btn-submit">Claim Profile</button>
         </form>
     </div>
 </div>

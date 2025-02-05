@@ -86,7 +86,7 @@ class AdminController:
                 try:
                     with connection.cursor() as cursor:
                         cursor.execute(
-                            "SELECT id, company_name, address, website, status FROM regx_company WHERE id = %s",
+                            "SELECT id, company_name, email_address, website, status FROM regx_company WHERE id = %s",
                             (company_id,),
                         )
                         row = cursor.fetchone()
