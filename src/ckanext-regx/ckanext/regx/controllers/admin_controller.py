@@ -17,7 +17,7 @@ class AdminController:
                     try:
                         with connection.cursor() as cursor:
                             cursor.execute("""
-                                SELECT c.id, c.company_name, c.email_address, c.website, c.status, c.created,
+                                SELECT c.id, c.company_name, c.email_address, c.website, c.status, c.created, c.claimant, c.claimant_role,
                                        array_agg(a.alternative_name) FILTER (WHERE a.alternative_name IS NOT NULL) AS alternative_names
                                 FROM regx_company c
                                 LEFT JOIN regx_alternative_names a ON c.id = a.company_id
@@ -33,7 +33,7 @@ class AdminController:
                                     "website": row[3],
                                     "status": row[4],
                                     "created": row[5].strftime('%Y-%m-%d') if row[5] else None,
-                                    "alternative_names": row[6] if row[6] else []
+                                    "alternative_names": row[8] if row[8] else []
                                 }
                                 for row in rows
                             ]
@@ -116,3 +116,39 @@ class AdminController:
         except Exception as e:
             log.error(f"Error downloading dataset: {e}")
             return jsonify({"error": "Unexpected error occurred."}), 500
+
+    def view_profile(company_id):
+        try:
+            connection = connect_to_db()
+            if connection:
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT c.id, c.company_name, c.email_address, c.website, c.status, c.created, 
+                            array_agg(a.alternative_name) FILTER (WHERE a.alternative_name IS NOT NULL) AS alternative_names,
+                            c.claimant, c.claimant_role
+                        FROM regx_company c
+                        LEFT JOIN regx_alternative_names a ON c.id = a.company_id
+                        WHERE c.id = %s
+                        GROUP BY c.id
+                        """, (company_id,))
+                    company = cursor.fetchone()
+                    if company:
+                        company_details = {
+                            "id": company[0],
+                            "company_name": company[1],
+                            "email_address": company[2],
+                            "website": company[3],
+                            "status": company[4],
+                            "created": company[5].strftime('%Y-%m-%d') if company[5] else None,
+                            "alternative_names": company[6] if company[6] else [],
+                            "claimant": company[7],
+                            "claimant_role": company[8]
+                        }
+                        return tk.render('view_profile.html', extra_vars={'company': company_details})
+                    else:
+                        return "Company not found", 404
+            else:
+                return "Database connection failed", 500
+        except Exception as e:
+            log.error(f"Error fetching company details: {e}")
+            return "Unexpected error occurred", 500

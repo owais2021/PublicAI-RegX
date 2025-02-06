@@ -341,9 +341,9 @@ class RegxPlugin(SingletonPlugin):
             self._check_access()  # Accessible to all logged-in users
             return tk.render('index.html')
 
-        @blueprint.route('/view_profile')
-        def view_profile():
-            return tk.render('view_profile.html')
+        @blueprint.route('/view_profile/<int:company_id>', methods=['GET'])
+        def view_profile(company_id):
+            return AdminController.view_profile(company_id)
 
         # Routes for the Company form
         @blueprint.route('/company_form', methods=['GET'])
