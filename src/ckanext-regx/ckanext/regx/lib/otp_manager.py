@@ -5,6 +5,7 @@ import logging
 from email.mime.text import MIMEText
 from flask import session
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 log = logging.getLogger(__name__)
 
@@ -47,11 +48,11 @@ class OTPManager:
                 server.sendmail(smtp_email, email, msg.as_string())
 
             log.info(f"OTP sent successfully to {email}.")
-            return True
+            return {"status": True, "message": "Otp Sent Successfully"}
 
         except smtplib.SMTPException as smtp_error:
             log.error(f"SMTP error while sending OTP to {email}: {smtp_error}")
-            return False
+            return {"status": False, "message": "SMTP error 550: Mailbox unavailable."}
 
         except Exception as e:
             log.error(f"Unexpected error while sending OTP to {email}: {e}")
@@ -91,3 +92,24 @@ class OTPManager:
         except Exception as e:
             log.error(f"Error during OTP verification: {e}")
             return {"status": False, "message": "An unexpected error occurred during verification."}
+
+    @staticmethod
+    def parsewebsite(url):
+        # Parse the URL to break it down into components
+        parsed = urlparse(url)
+
+        domain = parsed.netloc   # Extract the domain name with possible subdomains
+
+        # Remove 'www.' if it exists
+        if domain.startswith('www.'):
+            domain = domain[4:]
+
+        # Also strip any port numbers
+        domain = domain.split(':')[0]
+
+        # Normalize to lower case to ensure consistency
+        domain = domain.lower()
+
+        # Strip trailing slash if it exists
+        domain = domain.rstrip('/')
+        return domain

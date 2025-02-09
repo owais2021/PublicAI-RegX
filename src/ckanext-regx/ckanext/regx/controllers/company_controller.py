@@ -1,6 +1,7 @@
 from flask import request, redirect, url_for, flash, get_flashed_messages
 from ckan.plugins import toolkit as tk
 from ckanext.regx.lib.database import connect_to_db, close_db_connection
+from ckanext.regx.lib.otp_manager import OTPManager
 import psycopg2
 import logging
 
@@ -12,26 +13,23 @@ logging.basicConfig(level=logging.DEBUG)
 class CompanyController:
     @staticmethod
     def company_form():
-        """
-        Display the company form with flash messages.
-        """
         log.debug("Rendering company form.")
         # Fetch flash messages
+        # website=f"https://{domain}"
         flash_messages = get_flashed_messages(with_categories=True)
         return tk.render('company_form.html', extra_vars={'flash_messages': flash_messages})
 
     @staticmethod
     def submit_company():
-        """
-        Handle form submission and save data into the 'regx_company' table.
-        """
+
         try:
             company_name = request.form.get('company_name')
-            website = request.form.get('website')
+            website = OTPManager.parsewebsite(request.form.get('website'))
             official_email = request.form.get('official_email')
             your_email = request.form.get('your_email')
             role = request.form.get('role')
             alternative_names = request.form.getlist('alt_names[]')
+            company_address = request.form.get('address')
 
             # Log received data
             log.debug(f"Received data: {company_name}, {website}, {official_email}, {your_email}, {role}, {alternative_names}")  # noqa
@@ -59,23 +57,24 @@ class CompanyController:
                         # Insert new company
                         cursor.execute(
                             """
-                            INSERT INTO regx_company (company_name, website, email_address, claimant, claimant_role, status)
-                            VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
+                            INSERT INTO regx_company (company_name, website, email_address, claimant, claimant_role, company_address, status)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
                             """,
                             (company_name, website, official_email,
-                             your_email, role, False)
+                             your_email, role, company_address, False)
                         )
                         company_id = cursor.fetchone()[0]
 
                         # Insert alternative names
                         for alt_name in alternative_names:
-                            cursor.execute(
-                                """
-                                INSERT INTO regx_alternative_names (alternative_name, company_id)
-                                VALUES (%s, %s)
-                                """,
-                                (alt_name, company_id)
-                            )
+                            if alt_name:
+                                cursor.execute(
+                                    """
+                                    INSERT INTO regx_alternative_names (alternative_name, company_id)
+                                    VALUES (%s, %s)
+                                    """,
+                                    (alt_name, company_id)
+                                )
                         connection.commit()
                         flash("Company created successfully!", "success")
                 except psycopg2.Error as e:

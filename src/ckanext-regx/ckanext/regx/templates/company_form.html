@@ -92,7 +92,7 @@
     }
 
     .add-alt-name {
-        background: #0b7a8b;
+        background: #3ec1d5;
         color: white;
         border: none;
         border-radius: 50%;
@@ -103,7 +103,7 @@
     }
 
     .remove-alt-name {
-        background: #dc3545;
+        background: #ec5c6b;
         color: white;
         border: none;
         border-radius: 50%;
@@ -150,6 +150,10 @@
                         <input type="email" id="official_email" name="official_email" placeholder="name@example.com"
                             required />
                     </div>
+                    <div class="form-group">
+                        <label for="role">Your Role</label>
+                        <input type="text" id="role" name="role" placeholder="e.g CTO" required />
+                    </div>
                 </div>
 
                 <!-- Second Column -->
@@ -163,13 +167,11 @@
                         <input type="email" id="your_email" name="your_email" placeholder="your.email@example.com"
                             required />
                     </div>
+                    <div class="form-group">
+                        <label for="address">Company Address</label>
+                        <input type="text" id="address" name="address" placeholder="Company Address here..." required />
+                    </div>
                 </div>
-            </div>
-
-            <!-- Full Width Below Columns -->
-            <div class="form-group">
-                <label for="role">Your Role</label>
-                <input type="text" id="role" name="role" placeholder="Enter your role in the company" required />
             </div>
 
             <!-- Dynamic Alternative Names Section -->

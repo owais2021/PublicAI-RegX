@@ -12,13 +12,33 @@ class EditCompanyController:
     @staticmethod
     def get_company(company_id):
 
+        # connection = connect_to_db()
+        # company = None
+        # if connection:
+        #     try:
+        #         with connection.cursor() as cursor:
+        #             cursor.execute(
+        #                 "SELECT id, company_name, website, email_address, claimant, claimant_role FROM regx_company WHERE id = %s", (company_id,))
+        #             company = cursor.fetchone()
+        #     finally:
+        #         close_db_connection(connection)
+        # return company
+
         connection = connect_to_db()
         company = None
         if connection:
             try:
                 with connection.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT id, company_name, website, email_address FROM regx_company WHERE id = %s", (company_id,))
+                    cursor.execute("""
+                    SELECT c.id, c.company_name, c.website, c.email_address, c.claimant, c.claimant_role, c.company_address,
+                        array_agg(a.alternative_name) FILTER (WHERE a.alternative_name IS NOT NULL) AS alternative_names
+                    FROM regx_company c
+                    LEFT JOIN regx_alternative_names a ON c.id = a.company_id
+                    WHERE c.id = %s
+                    GROUP BY c.id
+                    ORDER BY c.created DESC
+                    """, (company_id,))
+
                     company = cursor.fetchone()
             finally:
                 close_db_connection(connection)
@@ -31,7 +51,7 @@ class EditCompanyController:
             if 'email' in request.form:
                 if session.get('otp_verified', False):
                     return EditCompanyController.update_record(company_id)
-                return EditCompanyController.send_otp()
+                return EditCompanyController.send_otp(company_id)
             if 'otp' in request.form:  # Assuming verifying OTP
                 return EditCompanyController.verify_otp(company_id)
         else:
@@ -43,7 +63,7 @@ class EditCompanyController:
                 return redirect(url_for('regx.edit_company', company_id=company_id))
 
     @staticmethod
-    def send_otp():
+    def send_otp(company_id):
         try:
             website = request.form.get('website', '').strip().lower()
             email = request.form.get('email', '').strip().lower()
@@ -58,15 +78,32 @@ class EditCompanyController:
             if website_domain != email_domain:
                 return jsonify({"status": False, "message": "Website and email domains do not match."})
 
-            otp_sent = OTPManager.generate_and_send_otp(email)
-            if otp_sent:
-                session['otp_verified'] = False  # Reset OTP verified status
-                session['email'] = email
-                return jsonify({"status": True, "message": "OTP sent successfully. Check your email."})
-            else:
-                return jsonify({"status": False, "message": "Failed to send OTP. Please try again later."})
+            connection = connect_to_db()
+            if connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT claimant from regx_company  WHERE id=%s",
+                        (company_id,))
+                    connection.commit()
+                    result = cursor.fetchone()
+                    if not result:
+                        return jsonify({"status": False, "Message": "No Claimant Found"})
+
+                    claimant_email = result[0]
+                    if claimant_email.lower() == email.lower():
+                        otp_sent = OTPManager.generate_and_send_otp(email)
+                        if otp_sent:
+                            # Reset OTP verified status
+                            session['otp_verified'] = False
+                            session['email'] = email
+                            return jsonify({"status": True, "message": "OTP sent successfully. Check your email."})
+                        else:
+                            return jsonify({"status": False, "message": "Failed to send OTP. Please try again later."})
+
+                    else:
+                        return jsonify({"status": False, "message": "The provided email does not match the claimant email."})
         except Exception as e:
-            log.error(f"Error in submit_claim_profile: {e}")
+            log.error(f"Error in edit_profile_Controller: {e}")
             return jsonify({"status": False, "message": "An unexpected error occurred. Please try again."})
 
     @staticmethod
@@ -95,9 +132,8 @@ class EditCompanyController:
     @staticmethod
     def update_record(company_id):
         if session.get('otp_verified'):
-            company_name = request.form.get('company_name')
-            website = request.form.get('website')
-            company_email_address = request.form.get('address')
+            company_address = request.form.get('company_address')
+            alternative_names = request.form.getlist('alt_names[]')
             status = False
 
             connection = connect_to_db()
@@ -105,9 +141,21 @@ class EditCompanyController:
                 try:
                     with connection.cursor() as cursor:
                         cursor.execute(
-                            "UPDATE regx_company SET company_name=%s, website=%s, email_address=%s, status=%s WHERE id=%s",
-                            (company_name, website, company_email_address, status, company_id))
+                            "UPDATE regx_company SET company_address=%s, status=%s WHERE id=%s",
+                            (company_address, status, company_id))
+
+                        # Insert alternative names
+                        for alt_name in alternative_names:
+                            if alt_name:
+                                cursor.execute(
+                                    """
+                                    INSERT INTO regx_alternative_names (alternative_name, company_id)
+                                    VALUES (%s, %s)
+                                    """,
+                                    (alt_name, company_id)
+                                )
                         connection.commit()
+
                         return jsonify({"status": True, "message": "Record updated successfully", "redirect_url": url_for('regx.search_company')})
                 finally:
                     close_db_connection(connection)

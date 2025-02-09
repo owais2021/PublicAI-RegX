@@ -130,7 +130,8 @@
                 </div>
                 <div class="detail-item">
                     <span class="detail-label" style="font-weight: bold;">Website:</span>
-                    <a class="detail-value" href="{{ company.website }}"> {{ company.website }}</a>
+                    <a class="detail-value website-link" id="website-link" href="{{ company.website }}"> {{
+                        company.website }}</a>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label" style="font-weight: bold;">Created Date:</span>
@@ -168,6 +169,16 @@
             </div>
         </div>
 
+        <div class="profile-card">
+            <h4 class="mb-4">Company Address</h4>
+            <div class="info-grid">
+                <div class="detail-item">
+                    <span class="detail-label" style="font-weight: bold;">Address:</span>
+                    <span class="detail-value">{{ company.company_address }}</span>
+                </div>
+            </div>
+        </div>
+
         <div class="download-section">
             <button class="btn-download" onclick="downloadDataset({{ company.id}})">
                 <i class="fas fa-download me-2"></i>Download Dataset
@@ -180,5 +191,39 @@
     function downloadDataset(companyId) {
         window.location.href = `/regx/download_dataset/${companyId}`;
     }
+    function ensureHttps(url) {
+        if (!url) return url; // Handle empty URLs
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            return `https://${url}`;
+        }
+        return url.replace('http://', 'https://');
+    }
+
+    // Function to update website links
+    function updateWebsiteLinks() {
+        const websiteLinks = document.querySelectorAll('.website-link');
+        websiteLinks.forEach(link => {
+            link.href = ensureHttps(link.href);
+            link.textContent = ensureHttps(link.textContent);
+        });
+    }
+    // Observe changes to the search results container
+    const observer = new MutationObserver((mutationsList) => {
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                // Search results have been updated
+                updateWebsiteLinks();
+            }
+        }
+    });
+
+    // Start observing the search results container
+    const searchResultsContainer = document.getElementById('search-results-container');
+    if (searchResultsContainer) {
+        observer.observe(searchResultsContainer, { childList: true });
+    }
+
+    // Run on initial page load (in case there are pre-loaded results)
+    document.addEventListener('DOMContentLoaded', updateWebsiteLinks);
 </script>
 {% endblock %}

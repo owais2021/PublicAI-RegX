@@ -125,7 +125,7 @@ class AdminController:
                     cursor.execute("""
                         SELECT c.id, c.company_name, c.email_address, c.website, c.status, c.created, 
                             array_agg(a.alternative_name) FILTER (WHERE a.alternative_name IS NOT NULL) AS alternative_names,
-                            c.claimant, c.claimant_role
+                            c.claimant, c.claimant_role, c.company_address
                         FROM regx_company c
                         LEFT JOIN regx_alternative_names a ON c.id = a.company_id
                         WHERE c.id = %s
@@ -142,7 +142,8 @@ class AdminController:
                             "created": company[5].strftime('%Y-%m-%d') if company[5] else None,
                             "alternative_names": company[6] if company[6] else [],
                             "claimant": company[7],
-                            "claimant_role": company[8]
+                            "claimant_role": company[8],
+                            "company_address": company[9]
                         }
                         return tk.render('view_profile.html', extra_vars={'company': company_details})
                     else:

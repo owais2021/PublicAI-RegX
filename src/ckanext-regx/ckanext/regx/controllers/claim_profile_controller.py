@@ -64,11 +64,11 @@ class ClaimProfileController:
         Handle form submission for OTP generation with pre-validation against the database.
         """
         try:
-            website = request.form.get('website', '').strip().lower()
-            email = request.form.get('email', '').strip().lower()
+            website = OTPManager.parsewebsite(request.form.get('website'))
+            claimant_email = request.form.get('email', '').strip().lower()
             role = request.form.get('role')
 
-            if not website or not email:
+            if not website or not claimant_email:
                 log.warning(
                     "Website and email fields are required but were not provided.")
                 return jsonify({"status": False, "message": "Website and email are required."})
@@ -79,6 +79,7 @@ class ClaimProfileController:
             cursor.execute(
                 "SELECT id, company_name, website, email_address, status, claimant FROM regx_company WHERE website = %s", (website,))
             company = cursor.fetchone()
+            company
 
             if not company:
                 log.info(f"Website {website} not found in database.")
@@ -103,23 +104,23 @@ class ClaimProfileController:
             # Continue with domain validation if the website is found
             website_domain = website.split(
                 '//')[-1].split('/')[0].replace('www.', '')
-            email_domain = email.split('@')[-1]
+            email_domain = claimant_email.split('@')[-1]
 
             if website_domain != email_domain:
                 log.warning(f"Website domain {website_domain} does not match email domain {email_domain}.")  # noqa
                 return jsonify({"status": False, "message": "Website and email domains do not match."})
 
             # Generate and send OTP
-            otp_sent = OTPManager.generate_and_send_otp(email)
-            if otp_sent:
+            otp_sent = OTPManager.generate_and_send_otp(claimant_email)
+            if otp_sent["status"]:
                 # Store email in session for later verification
-                session['c_email'] = email
+                session['c_email'] = claimant_email
                 session['role'] = role
-                log.info(f"OTP sent successfully to {email}.")
+                log.info(f"OTP sent successfully to {claimant_email}.")
                 return jsonify({"status": True, "message": "OTP sent successfully. Check your email."})
             else:
                 log.error("Failed to send OTP.")
-                return jsonify({"status": False, "message": "Failed to send OTP. Please try again later."})
+                return jsonify({"status": False, "message": otp_sent['message']})
         except Exception as e:
             log.error(f"Error in submit_claim_profile: {e}", exc_info=True)
             return jsonify({"status": False, "message": "An unexpected error occurred. Please try again."})
@@ -159,7 +160,7 @@ class ClaimProfileController:
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "SELECT id, company_name, website, email_address FROM regx_company WHERE id = %s", (company_id,))
+                "SELECT id, company_name, website, email_address, company_address FROM regx_company WHERE id = %s", (company_id,))
             company = cursor.fetchone()
             if not company:
                 flash('Company not found.')
