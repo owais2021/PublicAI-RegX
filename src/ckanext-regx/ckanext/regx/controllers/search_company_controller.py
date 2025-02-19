@@ -19,7 +19,7 @@ class CompanySearchController:
                 try:
                     with connection.cursor() as cursor:
                         cursor.execute(
-                            "SELECT company_name, email_address, website, created, id FROM regx_company WHERE company_name ILIKE %s AND status=TRUE AND (claimant IS NOT NULL AND claimant != '')",
+                            "SELECT company_name, email_address, website, created, id FROM regx_company WHERE company_name ILIKE %s AND status=TRUE AND is_claimed=TRUE",
                             (f"%{profile_id}%",)
                         )
                         company = cursor.fetchall()

@@ -1,5 +1,6 @@
 from flask import request, redirect, url_for, flash, jsonify, session, get_flashed_messages, render_template
 from ckan.plugins import toolkit as tk
+from ckan.common import c
 from ckanext.regx.lib.otp_manager import OTPManager
 from ckanext.regx.lib.database import connect_to_db, close_db_connection
 import logging
@@ -29,40 +30,8 @@ class ClaimProfileController:
             flash("An unexpected error occurred. Please try again.", "error")
             return redirect(url_for('regx.claim_profile'))
 
-    # @staticmethod
-    # def submit_claim_profile():
-    #     """
-    #     Handle form submission for OTP generation.
-    #     """
-    #     try:
-    #         website = request.form.get('website', '').strip().lower()
-    #         email = request.form.get('email', '').strip().lower()
-
-    #         if not website or not email:
-    #             return jsonify({"status": False, "message": "Website and email are required."})
-
-    #         website_domain = website.split(
-    #             '//')[-1].split('/')[0].replace('www.', '')
-    #         email_domain = email.split('@')[-1]
-
-    #         if website_domain != email_domain:
-    #             return jsonify({"status": False, "message": "Website and email domains do not match."})
-
-    #         otp_sent = OTPManager.generate_and_send_otp(email)
-    #         if otp_sent:
-    #             session['email'] = email
-    #             return jsonify({"status": True, "message": "OTP sent successfully. Check your email."})
-    #         else:
-    #             return jsonify({"status": False, "message": "Failed to send OTP. Please try again later."})
-    #     except Exception as e:
-    #         log.error(f"Error in submit_claim_profile: {e}")
-    #         return jsonify({"status": False, "message": "An unexpected error occurred. Please try again."})
-
     @staticmethod
     def submit_claim_profile():
-        """
-        Handle form submission for OTP generation with pre-validation against the database.
-        """
         try:
             website = OTPManager.parsewebsite(request.form.get('website'))
             claimant_email = request.form.get('email', '').strip().lower()
@@ -73,57 +42,75 @@ class ClaimProfileController:
                     "Website and email fields are required but were not provided.")
                 return jsonify({"status": False, "message": "Website and email are required."})
 
-            # Connect to the database to check if the website already exists
+            # Connect to the database
             conn = connect_to_db()
             cursor = conn.cursor()
+
+            # Fetch company details based on the website
             cursor.execute(
-                "SELECT id, company_name, website, email_address, status, claimant FROM regx_company WHERE website = %s", (website,))
+                "SELECT id, website, status, company_name FROM regx_company WHERE website = %s", (website,))
             company = cursor.fetchone()
-            company
 
             if not company:
                 log.info(f"Website {website} not found in database.")
                 return jsonify({"status": False, "message": "Website not registered."})
 
-            # Check if the status is false
-            if not company[4]:
-                log.info(f"Website {website} is inactive. Cannot proceed.")
-                return jsonify({"status": False, "message": "The company record is inactive and cannot be processed."})
+            # Check if the company status is inactive
+            if not company[2]:
+                log.info(f"Company {website} is inactive. Cannot proceed.")
+                return jsonify({"status": False, "message": "This company record is inactive and cannot be processed."})
 
-            # Check if it already has claimant
-            if company[5]:
-                log.info(f"Website {website} found cla")
-                return jsonify({"status": False, "message": "This Profiile is already claimed, Please contact admin for further queries"})
+            # Fetch the company ID
+            company_id = company[0]
 
-            # Store the company ID in the session
-            session['company_id'] = company[0]
+            # Check if the claimant email already exists for this company in the claimants table
+            cursor.execute(
+                "SELECT claimant FROM regx_claimants WHERE c_id = %s AND claimant = %s", (company_id, claimant_email))
+            existing_claimant = cursor.fetchone()
+
+            if existing_claimant:
+                log.info(
+                    f"Claimant email {claimant_email} already exists for company ID {company_id}.")
+                return jsonify({"status": False, "message": "This email already exists as a claimant for this company."})
+
+            # Store company ID in session for later use
+            session['company_id'] = company_id
             log.debug(f"Website {website} found with details: {company}.")
-            log.debug(f"Role{role}")
-            close_db_connection(conn)
+            log.debug(f"Role: {role}")
 
-            # Continue with domain validation if the website is found
-            website_domain = website.split(
+            # Continue with domain validation
+            website_url = company[1]
+            website_domain = website_url.split(
                 '//')[-1].split('/')[0].replace('www.', '')
             email_domain = claimant_email.split('@')[-1]
 
             if website_domain != email_domain:
-                log.warning(f"Website domain {website_domain} does not match email domain {email_domain}.")  # noqa
+                log.warning(
+                    f"Website domain {website_domain} does not match email domain {email_domain}.")
                 return jsonify({"status": False, "message": "Website and email domains do not match."})
 
             # Generate and send OTP
             otp_sent = OTPManager.generate_and_send_otp(claimant_email)
             if otp_sent["status"]:
-                # Store email in session for later verification
+                # Store email and role in session for later verification
                 session['c_email'] = claimant_email
                 session['role'] = role
+                session['company_name'] = company[3]
                 log.info(f"OTP sent successfully to {claimant_email}.")
                 return jsonify({"status": True, "message": "OTP sent successfully. Check your email."})
             else:
                 log.error("Failed to send OTP.")
                 return jsonify({"status": False, "message": otp_sent['message']})
+
         except Exception as e:
             log.error(f"Error in submit_claim_profile: {e}", exc_info=True)
             return jsonify({"status": False, "message": "An unexpected error occurred. Please try again."})
+
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                close_db_connection(conn)
 
     @staticmethod
     def verify_otp():
@@ -153,9 +140,9 @@ class ClaimProfileController:
             log.error(f"Error in verify_otp: {e}")
             return jsonify({"status": False, "error": "An unexpected error occurred during verification."})
 
+# updateclaim form py call ho ra hai aur yahan abhi VAt wali fields dalni hain
     @staticmethod
     def fetch_record(company_id):
-        """Fetches company details from the database."""
         conn = connect_to_db()
         cursor = conn.cursor()
         try:
@@ -164,7 +151,6 @@ class ClaimProfileController:
             company = cursor.fetchone()
             if not company:
                 flash('Company not found.')
-                # Redirect or handle as needed
                 return jsonify({"status": False, "error": "No Record Found"})
             log.info(company)
             return render_template('update_claim_form.html', company_obj=company)
@@ -176,86 +162,67 @@ class ClaimProfileController:
         if request.method != 'POST':
             return jsonify({"status": False, "message": "Invalid request method."})
 
+        profile_created_by = c.userobj.email  # Logged-in user's email
+
         try:
             claimant_email = session.get('c_email')
             claimant_role = session.get('role')
+            company_name = session.get('company_name')
 
             with connect_to_db() as conn, conn.cursor() as cursor:
-
+                # Check if the company already has a profile_created_by value
                 cursor.execute("""
-                    UPDATE regx_company
-                    SET claimant = %s, claimant_role = %s, status = False
+                    SELECT profile_created_by
+                    FROM regx_company
                     WHERE id = %s
-                """, (claimant_email, claimant_role, company_id))
+                    LIMIT 1
+                """, (company_id,))
+                result = cursor.fetchone()
+
+                if not result or not result[0]:
+                    # If no profile_created_by, insert the first claimant and update the company
+                    cursor.execute("""
+                        INSERT INTO regx_claimants (claimant, claimant_role, status, c_id)
+                        VALUES (%s, %s, %s, %s)
+                    """, (claimant_email, claimant_role, True, company_id))
+                    cursor.execute("""
+                        UPDATE regx_company
+                        SET is_claimed = %s, profile_created_by = %s
+                        WHERE id = %s
+                    """, (True, profile_created_by, company_id))
+                else:
+                    # If profile_created_by exists, only insert the claimant
+                    cursor.execute("""
+                        INSERT INTO regx_claimants (claimant, claimant_role, status, c_id)
+                        VALUES (%s, %s, %s, %s)
+                    """, (claimant_email, claimant_role, True, company_id))
+                    cursor.execute("""
+                        UPDATE regx_company
+                        SET is_claimed = %s
+                        WHERE id = %s
+                    """, (True, company_id))
+
                 conn.commit()
 
-            session.pop('otp_verified', None)
-            session.pop('company_id', None)
-            session.pop('email', None)
-            session.pop('role', None)
+                # Clear session data
+                session.pop('otp_verified', None)
+                session.pop('company_id', None)
+                session.pop('email', None)
+                session.pop('role', None)
+                session.pop('company_name', None)
 
-            return jsonify({"status": True, "message": "Claim Request Submitted Successfully", "redirect_url": url_for('regx.search_company')})
+                # Send claim request email
+                OTPManager.send_claim_request_email(
+                    claimant_email, company_name)
+
+                return jsonify({
+                    "status": True,
+                    "message": "Claim request submitted successfully.",
+                    "redirect_url": url_for('regx.search_company')
+                })
 
         except Exception as e:
             log.error(f"Failed to update company details: {e}")
             if conn:
                 conn.rollback()
             return jsonify({"status": False, "message": "Failed to update company details."})
-
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                close_db_connection(conn)
-
-
-# @staticmethod
-#     def update_record(company_id):
-#         if request.method != 'POST':
-#             return jsonify({"status": False, "message": "Invalid request method."})
-
-#         try:
-#             company_name = request.form['company_name']
-#             website = request.form['website']
-#             email_address = request.form['email_address']
-#             claimant_email = session.get('c_email')
-#             claimant_role = session.get('role')
-
-#             website_domain = website.split(
-#                 '//')[-1].split('/')[0].replace('www.', '')
-#             email_domain = email_address.split('@')[-1]
-
-#             if website_domain != email_domain:
-#                 log.warning(f"Website domain {website_domain} does not match email domain {email_domain}.")  # noqa
-#                 return jsonify({"status": False, "message": "Website and email domains do not match."})
-
-#             with connect_to_db() as conn, conn.cursor() as cursor:
-#                 cursor.execute("""
-#                     INSERT INTO regx_claimants (company_name, website, email_address, claimant_email, claimant_role)
-#                     VALUES (%s, %s, %s, %s, %s)
-#                 """, (company_name, website, email_address, claimant_email, claimant_role))
-#                 cursor.execute("""
-#                     UPDATE regx_company
-#                     SET company_name = %s, email_address = %s, status = False
-#                     WHERE id = %s
-#                 """, (company_name, email_address, company_id))
-#                 conn.commit()
-
-#             session.pop('otp_verified', None)
-#             session.pop('company_id', None)
-#             session.pop('email', None)
-#             session.pop('role', None)
-
-#             return jsonify({"status": True, "message": "Update Request Submitted Successfully", "redirect_url": url_for('regx.search_company')})
-
-#         except Exception as e:
-#             log.error(f"Failed to update company details: {e}")
-#             if conn:
-#                 conn.rollback()
-#             return jsonify({"status": False, "message": "Failed to update company details."})
-
-#         finally:
-#             if cursor:
-#                 cursor.close()
-#             if conn:
-#                 close_db_connection(conn)

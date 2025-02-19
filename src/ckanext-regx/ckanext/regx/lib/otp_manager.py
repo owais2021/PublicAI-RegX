@@ -94,6 +94,107 @@ class OTPManager:
             return {"status": False, "message": "An unexpected error occurred during verification."}
 
     @staticmethod
+    def send_claim_request_email(recipient_email, company_name):
+        try:
+            # Load SMTP configuration
+            smtp_server = os.getenv('SMTP_SERVER')
+            smtp_port = int(os.getenv('SMTP_PORT', 465))
+            smtp_email = os.getenv('SMTP_EMAIL')
+            smtp_password = os.getenv('SMTP_PASSWORD')
+
+            if not all([smtp_server, smtp_port, smtp_email, smtp_password]):
+                log.error(
+                    "SMTP configuration is incomplete. Please check the environment variables.")
+                return {"status": False, "message": "Email configuration error."}
+
+            log.debug(
+                f"Preparing to send claim request email to {recipient_email}.")
+
+            # Email content
+            subject = "Claim Request Notification"
+            body = (
+                f"Dear User,\n\n"
+                f"Your request to claim the company profile for '{company_name}' has been received. \n\n"
+                f"Best Regards,\nThe REGX Team"
+            )
+
+            # Create email message
+            msg = MIMEText(body)
+            msg['Subject'] = subject
+            msg['From'] = smtp_email
+            msg['To'] = recipient_email
+
+            # Send email
+            with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+                server.login(smtp_email, smtp_password)
+                server.sendmail(smtp_email, recipient_email, msg.as_string())
+
+            log.info(
+                f"Claim request email sent successfully to {recipient_email}.")
+            return {"status": True, "message": "Claim request email sent successfully."}
+
+        except smtplib.SMTPException as smtp_error:
+            log.error(
+                f"SMTP error while sending claim request email to {recipient_email}: {smtp_error}")
+            return {"status": False, "message": "Failed to send email. SMTP error."}
+
+        except Exception as e:
+            log.error(
+                f"Unexpected error while sending claim request email to {recipient_email}: {e}")
+            return {"status": False, "message": "An unexpected error occurred while sending email."}
+
+    @staticmethod
+    def profile_approve_email(recipient_email, company_name):
+        try:
+            # Load SMTP configuration
+            smtp_server = os.getenv('SMTP_SERVER')
+            smtp_port = int(os.getenv('SMTP_PORT', 465))
+            smtp_email = os.getenv('SMTP_EMAIL')
+            smtp_password = os.getenv('SMTP_PASSWORD')
+
+            if not all([smtp_server, smtp_port, smtp_email, smtp_password]):
+                log.error(
+                    "SMTP configuration is incomplete. Please check the environment variables.")
+                return {"status": False, "message": "Email configuration error."}
+
+            log.debug(
+                f"Preparing to send claim request email to {recipient_email}.")
+
+            # Email content
+            subject = "Claim Request Notification"
+            body = (
+                f"Dear User,\n\n"
+                f"Congratualations your company profile '{company_name}' has been approved and live in our system. "
+                f"Thanks for your patience\n\n"
+                f"Best Regards,\nThe REGX Team"
+            )
+
+            # Create email message
+            msg = MIMEText(body)
+            msg['Subject'] = subject
+            msg['From'] = smtp_email
+            msg['To'] = recipient_email
+
+            # Send email
+            with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+                server.login(smtp_email, smtp_password)
+                server.sendmail(smtp_email, recipient_email, msg.as_string())
+
+            log.info(
+                f"Claim request email sent successfully to {recipient_email}.")
+            return {"status": True, "message": "Claim request email sent successfully."}
+
+        except smtplib.SMTPException as smtp_error:
+            log.error(
+                f"SMTP error while sending claim request email to {recipient_email}: {smtp_error}")
+            return {"status": False, "message": "Failed to send email. SMTP error."}
+
+        except Exception as e:
+            log.error(
+                f"Unexpected error while sending claim request email to {recipient_email}: {e}")
+            return {"status": False, "message": "An unexpected error occurred while sending email."}
+
+    @staticmethod
     def parsewebsite(url):
         # Parse the URL to break it down into components
         parsed = urlparse(url)

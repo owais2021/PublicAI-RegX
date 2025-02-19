@@ -338,19 +338,32 @@ class RegxPlugin(SingletonPlugin):
             """
             Index route for the plugin.
             """
-            self._check_access()  # Accessible to all logged-in users
+            # self._check_access()  # Accessible to all logged-in users
             return tk.render('index.html')
 
         @blueprint.route('/view_profile/<int:company_id>', methods=['GET'])
         def view_profile(company_id):
             return AdminController.view_profile(company_id)
 
+        @blueprint.route('/get_profiles/', methods=['GET'])
+        def get_profiles():
+            return CompanyController.get_profiles()
+
+        @blueprint.route('/view_claimants/<int:company_id>', methods=['GET'])
+        def view_claimants(company_id):
+            log.debug("Accessing Claimants page.")
+            return CompanyController.view_claimants(company_id)
+
+        @blueprint.route('/toggle_status_claimant', methods=['POST'])
+        def toggle_status_claimant():
+            return CompanyController.toggle_status_claimant()
+
         # Routes for the Company form
         @blueprint.route('/company_form', methods=['GET'])
         def company_form():
             """
             Page for creating a company profile.
-            Accessible only to logged-in users.
+            Accessible only to logged-in users. 
             """
             self._check_access()  # Ensure only logged-in users can access
             return CompanyController.company_form()
@@ -372,7 +385,7 @@ class RegxPlugin(SingletonPlugin):
 
         blueprint.add_url_rule(
             '/verify_otp',
-            'verifyy_otp',
+            'verify_otp',
             ClaimProfileController.verify_otp,
             methods=['POST']
         )
@@ -387,18 +400,6 @@ class RegxPlugin(SingletonPlugin):
             else:
                 abort(404)
 
-        # # Setup routing for the edit company page
-        # @blueprint.route('/edit_company/<int:company_id>', methods=['GET', 'POST'], endpoint='edit_company')
-        # def edit_company(company_id):
-        #     return EditCompanyController.edit_company(company_id)
-        # blueprint.add_url_rule('/request_otp/<int:company_id>', 'request_otp',
-        #                        EditCompanyController.request_otp, methods=['POST'])
-
-        # blueprint.add_url_rule('/verify_otp/<int:company_id>', 'verifyy_otp',
-        #                        EditCompanyController.verify_otp, methods=['POST'])
-
-        # Setup routing for the edit company page
-
         @blueprint.route('/edit_company/<int:company_id>', methods=['GET', 'POST'])
         def edit_company(company_id):
             log.info("Request method received: " + request.method)
@@ -407,15 +408,9 @@ class RegxPlugin(SingletonPlugin):
                 # Handle POST logic here
             return EditCompanyController.edit_company(company_id)
 
-        # @blueprint.route('/edit_company/<int:company_id>', methods=['GET', 'POST'], endpoint='edit_company')
-        # def edit_company(company_id):
-        #     log.info("Andr aya  hmmhai")
-        #     session['c_id'] = company_id
-        #     return EditCompanyController.edit_company(company_id)
-
         blueprint.add_url_rule(
-            '/verify_otp',
-            'verify_otp',
+            '/verify_otp_edit',
+            'verify_otp_edit',
             EditCompanyController.verify_otp,
             methods=['POST'])
 

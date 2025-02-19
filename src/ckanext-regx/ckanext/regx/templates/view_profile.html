@@ -4,6 +4,7 @@
 {{ super() }}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
 <style>
+    /* Parent Card + Layout */
     .profile-card {
         background: white;
         border-radius: 12px;
@@ -24,42 +25,26 @@
         padding: 15px 0;
         border-bottom: 1px solid #eee;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-    }
-
-    .profile-card .info-grid .detail-item:last-child {
-        border-bottom: none;
-        /* Ensures no bottom border for the last item within each profile card */
     }
 
     .detail-label {
         font-weight: 500;
         color: #666;
-        flex: 1;
-        /* Adjust this if necessary to reduce the gap */
-        margin-right: 10px;
-        /* You can adjust this to manage the space between the label and the value */
+        margin-right: 0;
     }
 
     .detail-value {
         flex-grow: 1;
         color: #333;
         text-align: left;
-        /* This aligns the text to the left, ensuring no large gap on the right */
-    }
-
-    .profile-card .info-grid .detail-item:last-child {
-        border-bottom: none;
-        /* Ensures no bottom border for the last item */
+        margin-left: 6px;
     }
 
     .status-button {
         position: absolute;
         top: 20px;
-        /* Adjust based on your needs */
         right: 20px;
-        /* Adjust based on your needs */
         padding: 7px 20px;
         color: white;
         border: none;
@@ -69,12 +54,10 @@
 
     .status-true {
         background-color: #28a745;
-        /* Green for active */
     }
 
     .status-false {
         background-color: #dc3545;
-        /* Red for inactive */
     }
 
     .alt-name-list {
@@ -85,10 +68,49 @@
     }
 
     .alt-name-item {
-        background: #f3f4f6;
+        background: #cce0ff;
         padding: 6px 15px;
         border-radius: 20px;
         font-size: 0.9em;
+    }
+
+    .claimant-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .claimant-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .claimant-card .card-title {
+        font-size: 1.1rem;
+        color: #2b2d42;
+    }
+
+    .claimant-card .card-subtitle {
+        font-size: 0.85rem;
+    }
+
+    .claimant-meta {
+        border-top: 1px solid #f8f9fa;
+        padding-top: 12px;
+        margin-top: 12px;
+    }
+
+    .badge {
+        font-weight: 500;
+        padding: 0.5em 0.75em;
+    }
+
+    .bg-success {
+        background-color: #28a745 !important;
+    }
+
+    .bg-secondary {
+        background-color: #6c757d !important;
     }
 
     .download-section {
@@ -110,6 +132,55 @@
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(11, 122, 139, 0.3);
     }
+
+    /* Modern Table for Tenders */
+    .modern-card {
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .modern-table thead th {
+        background-color: #e2e8f0;
+        /* a neutral grayish-blue */
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+    }
+
+    /* Subtle zebra striping for table rows */
+    .modern-table tbody tr:nth-child(odd) {
+        background-color: #f8fafc;
+    }
+
+    /* Pill-style statuses */
+    .status-badge {
+        font-weight: 500;
+        border-radius: 9999px;
+        padding: 0.45rem 0.75rem;
+    }
+
+    .bg-open {
+        background-color: #cce0ff;
+        color: #084298;
+    }
+
+    .bg-paid {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .bg-inactive {
+        background-color: #f3f4f6;
+        color: #4b5563;
+    }
+
+    .rounded-table {
+        border-radius: 6px;
+        /* The corner radius you want */
+        overflow: hidden;
+        /* Clips anything outside the rounded corners */
+        border: 1px solid #ddd;
+        /* Optional: to show a subtle border */
+    }
 </style>
 {% endblock %}
 
@@ -117,10 +188,13 @@
 <div class="regx-container">
     {% include "side_nav.html" %}
     <div class="container">
+
+        <!-- Company Name Card -->
         <div class="profile-card">
             <h1>{{ company.company_name }}</h1>
-
         </div>
+
+        <!-- Company Details -->
         <div class="profile-card">
             <h4 class="mb-4">Company Details</h4>
             <div class="info-grid">
@@ -130,8 +204,9 @@
                 </div>
                 <div class="detail-item">
                     <span class="detail-label" style="font-weight: bold;">Website:</span>
-                    <a class="detail-value website-link" id="website-link" href="{{ company.website }}"> {{
-                        company.website }}</a>
+                    <a class="detail-value website-link" id="website-link" href="{{ company.website }}">
+                        {{ company.website }}
+                    </a>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label" style="font-weight: bold;">Created Date:</span>
@@ -143,10 +218,10 @@
             </div>
         </div>
 
+        <!-- Alternative Names -->
         <div class="profile-card">
             <h4 class="mb-4">Alternative Names</h4>
             <div class="alt-name-list">
-                <!-- Dynamic alternative names would go here -->
                 <div class="alt-name-list">
                     {% for name in company['alternative_names'] %}
                     <span class="alt-name-item">{{ name }}</span>
@@ -155,32 +230,145 @@
             </div>
         </div>
 
+        <!-- Legal Information -->
         <div class="profile-card">
-            <h4 class="mb-4">Claimant Information</h4>
+            <h4 class="mb-4">Legal Information</h4>
             <div class="info-grid">
                 <div class="detail-item">
-                    <span class="detail-label" style="font-weight: bold;">Claimant Email:</span>
-                    <span class="detail-value">{{ company.claimant }}</span>
+                    <span class="detail-label" style="font-weight: bold;">VAT Number:</span>
+                    <span class="detail-value">{{ company.vat_number }}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label" style="font-weight: bold;">Claimant Role:</span>
-                    <span class="detail-value">{{ company.claimant_role }}</span>
+                    <span class="detail-label" style="font-weight: bold;">Tax ID:</span>
+                    <span class="detail-value">{{ company.tax_id }}</span>
                 </div>
             </div>
         </div>
 
+        <!-- Claimants -->
+        {% if c.user or c.userobj.sysadmin %}
+        <div class="profile-card">
+            <h4 class="mb-4">Claimants</h4>
+            <div class="row">
+                {% if company.claimant and company.claimant_role and company.claimant_status %}
+                {% for i in range(company.claimant|length) %}
+                {% set claimant = company.claimant[i] %}
+                {% set role = company.claimant_role[i] %}
+                {% set status = company.claimant_status[i] %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="claimant-card card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="card-title mb-1">{{ claimant }}</h5>
+                                    <p class="card-subtitle text-muted small">{{ role }}</p>
+                                </div>
+                                <span class="badge rounded-pill {{ 'bg-success' if status else 'bg-secondary' }}">
+                                    {{ 'Active' if status else 'Inactive' }}
+                                </span>
+                            </div>
+                            <div class="claimant-meta">
+                                <div class="d-flex justify-content-between small text-muted mb-2">
+                                    <span>Registered:</span>
+                                    <span>{{ company.created }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between small text-muted">
+                                    <span>Last Activity:</span>
+                                    <span>2 days ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info">No claimants found for this company</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Modern Tenders Table -->
+        <div class="profile-card modern-card p-3 mb-4">
+            <h4 class="mb-4">Tenders</h4>
+            <div class="table-responsive">
+                <table class="table align-middle table-borderless modern-table rounded-table ">
+                    <thead class="table-header">
+                        <tr>
+                            <th scope="col">Tender ID</th>
+                            <th scope="col">Tender Name</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="text-end">Bid Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Example static rows; replace with dynamic data as needed -->
+                        <tr>
+                            <td>
+                                <strong>TDR-001</strong><br />
+                                <small class="text-muted">#12345</small>
+                            </td>
+                            <td>Metro Construction</td>
+                            <td>
+                                <span class="badge status-badge bg-open">Open</span>
+                            </td>
+                            <td class="text-end">
+                                <strong>$78.00</strong><br />
+                                <small class="text-muted">USD</small>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>TDR-002</strong><br />
+                                <small class="text-muted">#12346</small>
+                            </td>
+                            <td>Highway Expansion</td>
+                            <td>
+                                <span class="badge status-badge bg-paid">Paid</span>
+                            </td>
+                            <td class="text-end">
+                                <strong>$40.00</strong><br />
+                                <small class="text-muted">USD</small>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong>TDR-003</strong><br />
+                                <small class="text-muted">#12347</small>
+                            </td>
+                            <td>Bridge Repair</td>
+                            <td>
+                                <span class="badge status-badge bg-inactive">Inactive</span>
+                            </td>
+                            <td class="text-end">
+                                <strong>$85.00</strong><br />
+                                <small class="text-muted">USD</small>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Company Address with Map -->
         <div class="profile-card">
             <h4 class="mb-4">Company Address</h4>
             <div class="info-grid">
                 <div class="detail-item">
-                    <span class="detail-label" style="font-weight: bold;">Address:</span>
-                    <span class="detail-value">{{ company.company_address }}</span>
+                    {% set address_encoded = company.company_address|urlencode %}
+                    <iframe width="100%" height="450" style="border:0;" loading="lazy" allowfullscreen
+                        referrerpolicy="no-referrer-when-downgrade"
+                        src="https://maps.google.com/maps?q={{ address_encoded }}&t=&z=13&ie=UTF8&iwloc=&output=embed">
+                    </iframe>
                 </div>
             </div>
         </div>
 
+        <!-- Download Section -->
         <div class="download-section">
-            <button class="btn-download" onclick="downloadDataset({{ company.id}})">
+            <button class="btn-download" onclick="downloadDataset({{ company.id }})">
                 <i class="fas fa-download me-2"></i>Download Dataset
             </button>
         </div>

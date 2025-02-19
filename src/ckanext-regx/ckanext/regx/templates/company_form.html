@@ -146,13 +146,17 @@
                             required />
                     </div>
                     <div class="form-group">
-                        <label for="address">Official Email</label>
+                        <label for="address">Official Contact Email</label>
                         <input type="email" id="official_email" name="official_email" placeholder="name@example.com"
                             required />
                     </div>
                     <div class="form-group">
-                        <label for="role">Your Role</label>
+                        <label for="role">Claimant Role</label>
                         <input type="text" id="role" name="role" placeholder="e.g CTO" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="vat">VAT Number</label>
+                        <input type="text" id="vat" name="vat" placeholder="12345678" />
                     </div>
                 </div>
 
@@ -163,17 +167,26 @@
                         <input type="url" id="website" name="website" placeholder="https://example.com" required />
                     </div>
                     <div class="form-group">
-                        <label for="your_email">Your Email</label>
+                        <label for="your_email">Claimant Email</label>
                         <input type="email" id="your_email" name="your_email" placeholder="your.email@example.com"
                             required />
                     </div>
+
                     <div class="form-group">
-                        <label for="address">Company Address</label>
-                        <input type="text" id="address" name="address" placeholder="Company Address here..." required />
+                        <label for="tax_id">Tax ID</label>
+                        <input type="text" id="tax_id" name="tax_id" autocomplete="off" placeholder="BK12345678" />
                     </div>
                 </div>
             </div>
-
+            <div class="form-group">
+                <label for="address">Company Address</label>
+                <div class="address-fields">
+                    <input type="text" id="street" name="street" placeholder="Street" autocomplete="off" required />
+                    <input type="text" id="postcode" name="postcode" placeholder="Postcode" autocomplete="off"
+                        required />
+                    <input type="text" id="city" name="city" placeholder="City" autocomplete="off" required />
+                </div>
+            </div>
             <!-- Dynamic Alternative Names Section -->
             <div class="form-group">
                 <label>

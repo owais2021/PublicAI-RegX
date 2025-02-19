@@ -111,12 +111,10 @@
                     ['organization']),
 
                     ('home.about', _('About')),
+                    ('regx.index', _('Regx')),
                     ) }}
-                    {% if c.user %} <!-- Show Regx only if user is logged in -->
-                    <li>
-                        <a href="{{ h.url_for('regx.index') }}">{{ _('Regx') }}</a>
-                    </li>
-                    {% endif %}
+                    <!-- {% if c.user %} Show Regx only if user is logged in -->
+                    <!-- {% endif %} -->
                     {% if c.user and c.userobj.sysadmin %} <!-- Show All Profiles only if user is admin -->
                     <li>
                         <a href="{{ h.url_for('regx.admin_all_profiles') }}">{{ _('All Profiles') }}</a>

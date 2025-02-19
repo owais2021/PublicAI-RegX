@@ -1,8 +1,10 @@
 import logging
 import json
+from ckan.common import c
 from flask import jsonify, Response, request
 from ckan.plugins import toolkit as tk
 from ckanext.regx.lib.database import connect_to_db, close_db_connection
+from ckanext.regx.lib.otp_manager import OTPManager
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +19,7 @@ class AdminController:
                     try:
                         with connection.cursor() as cursor:
                             cursor.execute("""
-                                SELECT c.id, c.company_name, c.email_address, c.website, c.status, c.created, c.claimant, c.claimant_role,
+                                SELECT c.id, c.company_name, c.email_address, c.website, c.status, c.created,
                                        array_agg(a.alternative_name) FILTER (WHERE a.alternative_name IS NOT NULL) AS alternative_names
                                 FROM regx_company c
                                 LEFT JOIN regx_alternative_names a ON c.id = a.company_id
@@ -33,7 +35,7 @@ class AdminController:
                                     "website": row[3],
                                     "status": row[4],
                                     "created": row[5].strftime('%Y-%m-%d') if row[5] else None,
-                                    "alternative_names": row[8] if row[8] else []
+                                    "alternative_names": row[6] if row[6] else []
                                 }
                                 for row in rows
                             ]
@@ -56,6 +58,10 @@ class AdminController:
         try:
             company_id = request.form.get("company_id")
             new_status = request.form.get("new_status") == "true"
+            # claimant = request.form.get("claimant")
+            company_name = request.form.get("company_name")
+            log.debug(
+                f"Preparing to send claim request email to {company_id}, {company_name}.")
 
             if not company_id:
                 return jsonify({"error": "Company ID is required."}), 400
@@ -69,6 +75,10 @@ class AdminController:
                             (new_status, company_id),
                         )
                         connection.commit()
+
+                        # if new_status:
+                        # OTPManager.profile_approve_email(
+                        #     claimant, company_name)
                         return jsonify({"message": "Status updated successfully."})
                 finally:
                     close_db_connection(connection)
@@ -123,13 +133,31 @@ class AdminController:
             if connection:
                 with connection.cursor() as cursor:
                     cursor.execute("""
-                        SELECT c.id, c.company_name, c.email_address, c.website, c.status, c.created, 
-                            array_agg(a.alternative_name) FILTER (WHERE a.alternative_name IS NOT NULL) AS alternative_names,
-                            c.claimant, c.claimant_role, c.company_address
+                        SELECT 
+                        c.id,
+                        c.company_name,
+                        c.email_address,
+                        c.website,
+                        c.status,
+                        c.created,
+                        c.vat_number,
+                        c.tax_id,
+                        c.company_address,
+
+                        -- aggregate alternative names
+                        array_agg(DISTINCT a.alternative_name) FILTER (WHERE a.alternative_name IS NOT NULL) AS alternative_names,
+
+                        -- aggregate claimant columns together
+                        array_agg(cl.claimant ORDER BY cl.id)      FILTER (WHERE cl.claimant       IS NOT NULL) AS claimants,
+                        array_agg(cl.claimant_role ORDER BY cl.id) FILTER (WHERE cl.claimant_role  IS NOT NULL) AS claimant_roles,
+                        array_agg(cl.status ORDER BY cl.id)        FILTER (WHERE cl.status         IS NOT NULL) AS claimant_statuses
+
                         FROM regx_company c
                         LEFT JOIN regx_alternative_names a ON c.id = a.company_id
+                        LEFT JOIN regx_claimants cl        ON c.id = cl.c_id
                         WHERE c.id = %s
-                        GROUP BY c.id
+                        GROUP BY c.id;
+
                         """, (company_id,))
                     company = cursor.fetchone()
                     if company:
@@ -140,10 +168,13 @@ class AdminController:
                             "website": company[3],
                             "status": company[4],
                             "created": company[5].strftime('%Y-%m-%d') if company[5] else None,
-                            "alternative_names": company[6] if company[6] else [],
-                            "claimant": company[7],
-                            "claimant_role": company[8],
-                            "company_address": company[9]
+                            "vat_number": company[6],
+                            "tax_id": company[7],
+                            "company_address": company[8],
+                            "alternative_names": company[9] if company[9] else [],
+                            "claimant": company[10] if company[10] else [],
+                            "claimant_role": company[11] if company[11] else [],
+                            "claimant_status": company[12] if company[12] else []
                         }
                         return tk.render('view_profile.html', extra_vars={'company': company_details})
                     else:

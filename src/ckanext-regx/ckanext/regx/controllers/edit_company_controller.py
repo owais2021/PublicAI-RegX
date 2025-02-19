@@ -30,7 +30,7 @@ class EditCompanyController:
             try:
                 with connection.cursor() as cursor:
                     cursor.execute("""
-                    SELECT c.id, c.company_name, c.website, c.email_address, c.claimant, c.claimant_role, c.company_address,
+                    SELECT c.id, c.company_name, c.website, c.email_address, c.vat_number, c.tax_id, c.company_address,
                         array_agg(a.alternative_name) FILTER (WHERE a.alternative_name IS NOT NULL) AS alternative_names
                     FROM regx_company c
                     LEFT JOIN regx_alternative_names a ON c.id = a.company_id
@@ -82,26 +82,21 @@ class EditCompanyController:
             if connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "SELECT claimant from regx_company  WHERE id=%s",
-                        (company_id,))
-                    connection.commit()
+                        "SELECT claimant from regx_claimants  WHERE  c_id=%s AND claimant=%s AND status=true",
+                        (company_id, email))
                     result = cursor.fetchone()
                     if not result:
-                        return jsonify({"status": False, "Message": "No Claimant Found"})
+                        return jsonify({"status": False, "message": "No Claimant Found with this email"})
 
-                    claimant_email = result[0]
-                    if claimant_email.lower() == email.lower():
-                        otp_sent = OTPManager.generate_and_send_otp(email)
-                        if otp_sent:
-                            # Reset OTP verified status
-                            session['otp_verified'] = False
-                            session['email'] = email
-                            return jsonify({"status": True, "message": "OTP sent successfully. Check your email."})
-                        else:
-                            return jsonify({"status": False, "message": "Failed to send OTP. Please try again later."})
-
+                    otp_sent = OTPManager.generate_and_send_otp(email)
+                    if otp_sent:
+                        # Reset OTP verified status
+                        session['otp_verified'] = False
+                        session['email'] = email
+                        return jsonify({"status": True, "message": "OTP sent successfully. Check your email."})
                     else:
-                        return jsonify({"status": False, "message": "The provided email does not match the claimant email."})
+                        return jsonify({"status": False, "message": "Failed to send OTP. Please try again later."})
+
         except Exception as e:
             log.error(f"Error in edit_profile_Controller: {e}")
             return jsonify({"status": False, "message": "An unexpected error occurred. Please try again."})
@@ -113,17 +108,20 @@ class EditCompanyController:
         """
         try:
             entered_otp = request.form.get('otp', '').strip()
+            result = None
 
             if not entered_otp:
                 return jsonify({"status": False, "error": "OTP is required."})
 
             result = OTPManager.verify_otp(entered_otp)
+            log.info(f"verify_otp result is: {result}")
             if result['status']:
                 # session['otp_verified'] = True
                 log.info(f"'otp_verified' in session: {session.get('otp_verified')}")  # noqa
                 log.info("Results bracket my aya hau.")
-                return jsonify({"status": True, "message": "Message here", "update_needed": True})
+                return jsonify({"status": True, "message": "OTP Verified Successfully"})
             else:
+                log.info("Results bracket my nni aya hau.")
                 return jsonify({"status": False, "error": result['message']})
         except Exception as e:
             log.error(f"Error in verify_otp: {e}")
@@ -133,6 +131,8 @@ class EditCompanyController:
     def update_record(company_id):
         if session.get('otp_verified'):
             company_address = request.form.get('company_address')
+            vat = request.form.get('vat')
+            tax_id = request.form.get('tax_id')
             alternative_names = request.form.getlist('alt_names[]')
             status = False
 
@@ -141,8 +141,8 @@ class EditCompanyController:
                 try:
                     with connection.cursor() as cursor:
                         cursor.execute(
-                            "UPDATE regx_company SET company_address=%s, status=%s WHERE id=%s",
-                            (company_address, status, company_id))
+                            "UPDATE regx_company SET company_address=%s, status=%s, vat_number=%s, tax_id=%s WHERE id=%s",
+                            (company_address, status, vat, tax_id, company_id))
 
                         # Insert alternative names
                         for alt_name in alternative_names:

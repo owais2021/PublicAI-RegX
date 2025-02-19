@@ -4,7 +4,56 @@
 {{ super() }}
 <link rel="stylesheet" href="{{ h.url_for_static('/css/claim_form.css') }}">
 <style>
-    .claim-form-btn.loading {
+    .modern-form {
+        max-width: 600px;
+        margin: 20px auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .modern-form .form-group {
+        margin-bottom: 15px;
+    }
+
+    .modern-form label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .modern-form input,
+    .modern-form textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .modern-form input:focus,
+    .modern-form textarea:focus {
+        border-color: #007bff;
+        outline: none;
+    }
+
+    .modern-form .claim-form-btn {
+        display: inline-block;
+        background-color: #0b7a8b;
+        color: #fff;
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .modern-form .btn-submit:hover {
+        background-color: #0056b3;
+    }
+
+    .modern-form .claim-form-btn.loading {
         background-color: #f0ad4e;
         cursor: not-allowed;
     }
@@ -19,10 +68,10 @@
             <h1>Claim Your Profile</h1>
 
             <!-- Claim Profile Form -->
-            <form id="claim_profile" action="/regx/submit_claim_profile" method="post">
+            <form id="claim_profile" action="/regx/submit_claim_profile" method="post" class="modern-form">
                 {{ h.csrf_input() }}
                 <div class="claim-form-group">
-                    <label for="website"> Website</label>
+                    <label for="website"> Official Company Name</label>
                     <input type="url" id="website" name="website" placeholder="Enter your official website" required>
                 </div>
                 <div class="claim-form-group">
@@ -105,7 +154,7 @@
 
             const result = await response.json();
 
-            if (response.ok && result.redirect_url) {
+            if (result.status == true && result.redirect_url) {
                 alert(result.message); // Show success message
                 window.location.href = result.redirect_url; // Redirect to the specified URL
             } else {

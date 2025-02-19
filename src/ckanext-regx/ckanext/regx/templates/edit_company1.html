@@ -130,6 +130,8 @@
     /* Specific rule for address and professional email fields */
     #company_address,
     #email,
+    #vat,
+    #tax_id,
     #alt_names {
         background-color: #fff !important;
     }
@@ -142,7 +144,6 @@
         background-position: right 10px center;
         background-size: 20px 20px;
         padding-right: 35px;
-        /* Add padding to prevent text overlap */
     }
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -172,7 +173,7 @@
                         <input type="url" id="website" name="website" value="{{ company[2] }}" required readonly>
                     </div>
                     <div class="form-group">
-                        <label for="address">Company Email:</label>
+                        <label for="address">Official Contact Email:</label>
                         <input type="text" id="company_email" name="company_email" value="{{ company[3] }}" required
                             readonly>
                     </div>
@@ -180,22 +181,21 @@
 
                 <div class="form-column">
                     <div class="form-group">
-                        <label for="claimant">Claimant:</label>
-                        <input type="text" id="claimant" name="claimant" value="{{ company[4] }}" required readonly>
+                        <label for="vat">VAT Number:</label>
+                        <input type="text" id="vat" name="vat" value="{{ company[4] }}" required>
                     </div>
                     <div class="form-group">
-                        <label for="claimant_role">Claimant Role:</label>
-                        <input type="text" id="claimant_role" name="claimant_role" value="{{ company[5] }}" required
-                            readonly>
+                        <label for="claimant_role">Tax ID:</label>
+                        <input type="text" id="tax_id" name="tax_id" value="{{ company[5] }}" required>
                     </div>
                     <div class="form-group">
                         <label for="company_address">Company Address:</label>
                         {% if company[6] %}
                         <input type="text" id="company_address" name="company_address" placeholder="e.g Luisental 28359"
-                            value="{{ company[6] }}" required>
+                            value="{{ company[6] }}">
                         {%else%}
-                        <input type="text" id="company_address" name="company_address" placeholder="e.g Luisental 28359"
-                            required>
+                        <input type="text" id="company_address" name="company_address"
+                            placeholder="e.g Luisental 28359">
                         {% endif %}
 
                     </div>
@@ -233,7 +233,7 @@
         </form>
 
         <div id="otp_input_section" class="form-group" style="display: none;">
-            <form id="otp-verification_form" class="modern-form" action="/regx/verify_otp" method="post">
+            <form id="otp-verification_form" class="modern-form" action="/regx/verify_otp_edit" method="post">
                 {{ h.csrf_input() }}
                 <label for="otp">Enter OTP:</label>
                 <input type="text" id="otp" name="otp" placeholder="Enter the OTP sent to your email" maxlength="4"
@@ -334,8 +334,9 @@
 
             const result = await response.json();
 
-            if (response.ok) {
-                alert("OTP Verified Successfully.");
+            if (result.status == true) {
+                // alert("OTP Verified Successfully.");
+                alert(result.message);
                 updateRecord();
             } else {
                 alert(result.error || "else Invalid OTP. Please try again.");
