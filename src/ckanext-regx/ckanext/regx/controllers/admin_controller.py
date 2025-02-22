@@ -143,20 +143,29 @@ class AdminController:
                         c.vat_number,
                         c.tax_id,
                         c.company_address,
-
-                        -- aggregate alternative names
-                        array_agg(DISTINCT a.alternative_name) FILTER (WHERE a.alternative_name IS NOT NULL) AS alternative_names,
-
-                        -- aggregate claimant columns together
-                        array_agg(cl.claimant ORDER BY cl.id)      FILTER (WHERE cl.claimant       IS NOT NULL) AS claimants,
-                        array_agg(cl.claimant_role ORDER BY cl.id) FILTER (WHERE cl.claimant_role  IS NOT NULL) AS claimant_roles,
-                        array_agg(cl.status ORDER BY cl.id)        FILTER (WHERE cl.status         IS NOT NULL) AS claimant_statuses
-
-                        FROM regx_company c
-                        LEFT JOIN regx_alternative_names a ON c.id = a.company_id
-                        LEFT JOIN regx_claimants cl        ON c.id = cl.c_id
-                        WHERE c.id = %s
-                        GROUP BY c.id;
+                        COALESCE(a.alternative_names, ARRAY[]::VARCHAR[]) AS alternative_names,
+                        COALESCE(cl.claimants, ARRAY[]::VARCHAR[]) AS claimant,
+                        COALESCE(cl.claimant_roles, ARRAY[]::VARCHAR[]) AS claimant_role,
+                        COALESCE(cl.claimant_statuses, ARRAY[]::BOOLEAN[]) AS claimant_status  -- Changed to BOOLEAN[]
+                    FROM regx_company c
+                    LEFT JOIN (
+                        SELECT 
+                            company_id,
+                            array_agg(DISTINCT alternative_name) AS alternative_names
+                        FROM regx_alternative_names
+                        GROUP BY company_id
+                    ) a ON c.id = a.company_id
+                    LEFT JOIN (
+                        SELECT 
+                            c_id,
+                            array_agg(claimant ORDER BY id) AS claimants,
+                            array_agg(claimant_role ORDER BY id) AS claimant_roles,
+                            array_agg(status ORDER BY id) AS claimant_statuses  -- Ensure this is BOOLEAN[]
+                        FROM regx_claimants
+                        GROUP BY c_id
+                    ) cl ON c.id = cl.c_id
+                    WHERE c.id = %s
+                    ORDER BY c.created DESC; 
 
                         """, (company_id,))
                     company = cursor.fetchone()

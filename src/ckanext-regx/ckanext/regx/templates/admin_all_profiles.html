@@ -4,6 +4,7 @@
 {{ super() }}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <div id="loader" style="display: none;">
     <div class="spinner"></div>
 </div>
@@ -92,8 +93,29 @@
 {{ super() }}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<!-- alert Library -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // Global Alert Function
+    function showAlert(icon, title, text, config = {}) {
+        const defaultConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: icon === 'success' ? 3000 : 4000,
+            timerProgressBar: true,
+            background: '#f8f9fa',
+            iconColor: icon === 'success' ? '#28a745' : '#dc3545'
+        };
 
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            ...defaultConfig,
+            ...config
+        });
+    }
     // Function to ensure website URL starts with https://
     function ensureHttps(url) {
         if (!url) return url; // Handle empty URLs
@@ -195,11 +217,14 @@
                     // company_name: company_name
                 },
                 success: function (response) {
-                    alert(response.message);
+                    // alert(response.message);
+                    showAlert('success', 'Success!', response.message);
                     $('#profilesTable').DataTable().ajax.reload();
                 },
                 error: function (xhr) {
-                    alert('Error: ' + xhr.responseJSON.error);
+                    // alert('Error: ' + xhr.responseJSON.error);
+                    showAlert('error', 'Error!', xhr.responseJSON.error || 'An unexpected error occurred.');
+
                 },
                 complete: function () {
                     // Hide the loader when the request is complete

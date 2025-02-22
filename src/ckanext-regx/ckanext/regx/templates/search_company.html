@@ -2,6 +2,7 @@
 
 {% block styles %}
 {{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <style>
     .search-container {
         display: flex;
@@ -91,6 +92,31 @@
         /* Darker blue for "Note:" */
     }
 </style>
+<!-- alert Library -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Global Alert Function
+    function showAlert(icon, title, text, config = {}) {
+        const defaultConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: icon === 'success' ? 3000 : 4000,
+            timerProgressBar: true,
+            background: '#f8f9fa',
+            iconColor: icon === 'success' ? '#28a745' : '#dc3545'
+        };
+
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            ...defaultConfig,
+            ...config
+        });
+    }
+
+</script>
 {% endblock %}
 
 {% block content %}
@@ -155,6 +181,9 @@
         {% else %}
         <div class="search-results">
             <p>No Record Found.</p>
+            <script>
+                showAlert('error', 'Error!', 'No Record Found');
+            </script>
         </div>
         {% endif %}
         {% endif %}

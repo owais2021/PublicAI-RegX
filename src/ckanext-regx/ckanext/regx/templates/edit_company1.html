@@ -2,6 +2,7 @@
 
 {% block styles %}
 {{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <style>
     .modern-form {
         max-width: 800px;
@@ -147,6 +148,30 @@
     }
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- alert Library -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Global Alert Function
+    function showAlert(icon, title, text, config = {}) {
+        const defaultConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: icon === 'success' ? 3000 : 4000,
+            timerProgressBar: true,
+            background: '#f8f9fa',
+            iconColor: icon === 'success' ? '#28a745' : '#dc3545'
+        };
+
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            ...defaultConfig,
+            ...config
+        });
+    }
+</script>
 {% endblock %}
 
 {% block content %}
@@ -302,14 +327,18 @@
             const result = await response.json();
 
             if (response.ok && result.status) {
-                alert(result.message); // Show success message
+                // alert(result.message); // Show success message
+                showAlert('success', 'Success!', result.message);
                 form.style.display = "none"; // Hide claim profile form
                 document.getElementById("otp_input_section").style.display = "block"; // Show OTP field
             } else {
-                alert(result.message || "An unexpected error occurred."); // Show error message
+                // alert(result.message || "An unexpected error occurred."); // Show error message
+                showAlert('error', 'Error!', result.message || 'An unexpected error occurred.');
+
             }
         } catch (error) {
-            alert("An unexpected error occurred. Please try again.");
+            // alert("An unexpected error occurred. Please try again.");
+            showAlert('error', 'Error!', 'An unexpected error occurred.');
             console.error("Error in form submission:", error);
         } finally {
             // Reset button state
@@ -336,10 +365,13 @@
 
             if (result.status == true) {
                 // alert("OTP Verified Successfully.");
-                alert(result.message);
+                // alert(result.message);
+                showAlert('success', 'Success!', result.message);
                 updateRecord();
             } else {
-                alert(result.error || "else Invalid OTP. Please try again.");
+                // alert(result.error || "else Invalid OTP. Please try again.");
+                showAlert('error', 'Error!', result.error || 'An unexpected error occurred.');
+
             }
         } catch (error) {
             alert("An unexpected error occurred. Please try again.");
@@ -357,12 +389,15 @@
             type: 'POST',
             data: updateFormData,
             success: function (response) {
-                alert(response.message);  // Display the success or failure message from the backend
+                // alert(response.message);  // Display the success or failure message from the backend
+                showAlert('success', 'Success!', response.message);
                 window.location.href = response.redirect_url;
             },
             error: function (xhr, status, error) {
                 console.error('Error updating record:', error);
-                alert('An error occurred during the update. Please try again.');
+                showAlert('error', 'Error!', 'An error occurred during the update. Please try again.');
+
+                // alert('An error occurred during the update. Please try again.');
             }
         });
     }

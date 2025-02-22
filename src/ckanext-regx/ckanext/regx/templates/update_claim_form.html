@@ -2,6 +2,7 @@
 
 {% block styles %}
 {{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <style>
     .modern-form {
         max-width: 600px;
@@ -67,6 +68,8 @@
         padding-right: 35px;
     }
 </style>
+<!-- alert Library -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}
 
 {% block content %}
@@ -114,6 +117,27 @@
             websiteInput.value = ensureHttps(websiteInput.value);
         }
     });
+    // Global Alert Function
+    function showAlert(icon, title, text, config = {}) {
+        const defaultConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: icon === 'success' ? 3000 : 4000,
+            timerProgressBar: true,
+            background: '#f8f9fa',
+            iconColor: icon === 'success' ? '#28a745' : '#dc3545'
+        };
+
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            ...defaultConfig,
+            ...config
+        });
+    }
+
     // Handle Claimaint Submission after verify details
     document.querySelector("#update_claim_f").addEventListener("submit", async function (e) {
         e.preventDefault();
@@ -134,13 +158,18 @@
             const result = await response.json();
 
             if (response.ok && result.redirect_url) {
-                alert(result.message); // Show success message
+                // alert(result.message); // Show success message
+                showAlert('success', 'Success!', result.message);
                 window.location.href = result.redirect_url; // Redirect to the specified URL
             } else {
-                alert(result.message); // Show error message
+                // alert(result.message); // Show error message
+                showAlert('error', 'Error!', result.message || 'An unexpected error occurred.');
+
             }
         } catch (error) {
-            alert("An unexpected error occurred. Please try again.");
+            // alert("An unexpected error occurred. Please try again.");
+            showAlert('error', 'Error!', 'An unexpected error occurred. Please try again.');
+
             console.error("Error in form submission:", error);
         }
     });

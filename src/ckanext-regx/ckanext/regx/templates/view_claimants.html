@@ -4,10 +4,12 @@
 {{ super() }}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <div id="loader" style="display: none;">
     <div class="spinner"></div>
 </div>
 <style>
+    /* Existing styles... */
     .dataTable {
         width: 100%;
         margin: 20px 0;
@@ -17,73 +19,30 @@
         border: 1px solid #ddd;
     }
 
-    .dataTable th {
-        background-color: #0b7a8b;
-        color: white;
-        font-weight: bold;
+    /* Keep all your existing styles */
+
+    /* SweetAlert2 Customization */
+    .swal2-toast {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        border-radius: 0.375rem !important;
+        font-family: inherit;
     }
 
-    .btn {
-        padding: 5px 10px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
+    .swal2-title {
+        font-size: 1.1rem !important;
+        color: #212529 !important;
+        margin-bottom: 0.5rem !important;
     }
 
-    .btn-sm {
-        font-size: 12px;
+    .swal2-icon.swal2-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
     }
 
-    .btn-success {
-        background-color: #28a745;
-        color: white;
-    }
-
-    .btn-danger {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    .btn-info {
-        background-color: #17a2b8;
-        color: white;
-    }
-
-    .fa {
-        padding-right: 5px;
-    }
-
-    /* Spinner CSS */
-    #loader {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-    }
-
-    .spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #3498db;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
+    .swal2-icon.swal2-error {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
     }
 </style>
 {% endblock %}
@@ -92,15 +51,39 @@
 {{ super() }}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<!-- alert Library -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // Global Alert Function
+    function showAlert(icon, title, text, config = {}) {
+        const defaultConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: icon === 'success' ? 3000 : 4000,
+            timerProgressBar: true,
+            background: '#f8f9fa',
+            iconColor: icon === 'success' ? '#28a745' : '#dc3545'
+        };
+
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            ...defaultConfig,
+            ...config
+        });
+    }
 
     function getCompanyIdFromUrl() {
         const segments = window.location.pathname.split('/');
-        return segments[segments.length - 1];  // last part of the path
+        return segments[segments.length - 1];
     }
+
     jQuery(document).ready(function ($) {
         const csrfToken = $('input[name="_csrf_token"]').val();
         const companyId = getCompanyIdFromUrl();
+
         $('#profilesTable').DataTable({
             ajax: {
                 url: `/regx/view_claimants/${companyId}`,
@@ -109,13 +92,9 @@
             },
             columns: [
                 { data: 'id', render: (data, type, row, meta) => meta.row + 1 },
-                {
-                    data: 'company_name',
-                },
+                { data: 'company_name' },
                 { data: 'claimant' },
-                {
-                    data: 'claimant_role',
-                },
+                { data: 'claimant_role' },
                 {
                     data: 'status',
                     render: function (data) {
@@ -136,40 +115,38 @@
                 }
             ]
         });
-        // Toggle Status Button
+
+        // Toggle Status Button with SweetAlert2
         $('#profilesTable').on('click', '.btn-status', function () {
             const button = $(this);
             const claimantId = button.data('id');
             const newStatus = button.data('status');
 
-            // Show the loader
             $('#loader').show();
 
             $.ajax({
                 url: '/regx/toggle_status_claimant',
                 type: 'POST',
-                headers: {
-                    'X-CSRF-Token': csrfToken
-                },
+                headers: { 'X-CSRF-Token': csrfToken },
                 data: {
                     claimant_id: claimantId,
                     new_status: newStatus,
                 },
                 success: function (response) {
-                    alert(response.message);
+                    showAlert('success', 'Success!', response.message);
                     $('#profilesTable').DataTable().ajax.reload();
                 },
                 error: function (xhr) {
-                    alert('Error: ' + xhr.responseJSON.error);
+                    showAlert('error', 'Error!', xhr.responseJSON.error || 'An unexpected error occurred.');
+
                 },
                 complete: function () {
-                    // Hide the loader when the request is complete
                     $('#loader').hide();
                 }
-
             });
         });
     });
+
 </script>
 {% endblock %}
 
