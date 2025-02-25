@@ -4,6 +4,7 @@ from ckan.common import c
 from ckanext.regx.lib.database import connect_to_db, close_db_connection
 from ckanext.regx.lib.otp_manager import OTPManager
 import psycopg2
+
 import logging
 
 # Setting up logging
@@ -38,6 +39,7 @@ class CompanyController:
             vat = request.form.get('vat')
             tax_id = request.form.get('tax_id')
             profile_created_by = c.userobj.email
+            public_id = OTPManager.generate_uuid()
 
             company_address = f"{street}, {postcode}, {city}"
 
@@ -74,18 +76,17 @@ class CompanyController:
                             flash("Company already exists in our database.", "error")
                             return redirect(url_for('regx.company_form'))
 
-                        # Insert new company
                         cursor.execute(
                             """
-                            INSERT INTO regx_company (company_name, website, email_address, vat_number, tax_id, company_address, profile_created_by, status, is_claimed)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+                            INSERT INTO regx_company (id, company_name, website, email_address, vat_number, tax_id, company_address, profile_created_by, public_id, status, is_claimed)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
                             """,
-                            (company_name, website, official_email,
-                             vat, tax_id, company_address, profile_created_by, False, True)
+                            (public_id, company_name, website, official_email,
+                             vat, tax_id, company_address, profile_created_by, public_id, False, True)
                         )
                         company_id = cursor.fetchone()[0]
 
-                        # Insert alternative names
+                        # Inserting alternative names
                         for alt_name in alternative_names:
                             if alt_name:
                                 cursor.execute(
@@ -103,6 +104,7 @@ class CompanyController:
                             (your_email, role, True, company_id)
                         )
                         connection.commit()
+                        log.debug(f"uuid here{public_id}")
                         flash("Company created successfully!", "success")
                 except psycopg2.Error as e:
                     connection.rollback()

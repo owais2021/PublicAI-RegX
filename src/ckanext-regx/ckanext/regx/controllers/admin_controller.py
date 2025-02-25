@@ -129,45 +129,56 @@ class AdminController:
 
     def view_profile(company_id):
         try:
+            log.debug(f"uuid {company_id}")
             connection = connect_to_db()
             if connection:
                 with connection.cursor() as cursor:
                     cursor.execute("""
                         SELECT 
-                        c.id,
-                        c.company_name,
-                        c.email_address,
-                        c.website,
-                        c.status,
-                        c.created,
-                        c.vat_number,
-                        c.tax_id,
-                        c.company_address,
-                        COALESCE(a.alternative_names, ARRAY[]::VARCHAR[]) AS alternative_names,
-                        COALESCE(cl.claimants, ARRAY[]::VARCHAR[]) AS claimant,
-                        COALESCE(cl.claimant_roles, ARRAY[]::VARCHAR[]) AS claimant_role,
-                        COALESCE(cl.claimant_statuses, ARRAY[]::BOOLEAN[]) AS claimant_status  -- Changed to BOOLEAN[]
-                    FROM regx_company c
-                    LEFT JOIN (
-                        SELECT 
-                            company_id,
-                            array_agg(DISTINCT alternative_name) AS alternative_names
-                        FROM regx_alternative_names
-                        GROUP BY company_id
-                    ) a ON c.id = a.company_id
-                    LEFT JOIN (
-                        SELECT 
-                            c_id,
-                            array_agg(claimant ORDER BY id) AS claimants,
-                            array_agg(claimant_role ORDER BY id) AS claimant_roles,
-                            array_agg(status ORDER BY id) AS claimant_statuses  -- Ensure this is BOOLEAN[]
-                        FROM regx_claimants
-                        GROUP BY c_id
-                    ) cl ON c.id = cl.c_id
-                    WHERE c.id = %s
-                    ORDER BY c.created DESC; 
-
-                        """, (company_id,))
+                            c.id,
+                            c.company_name,
+                            c.email_address,
+                            c.website,
+                            c.status,
+                            c.created,
+                            c.vat_number,
+                            c.tax_id,
+                            c.company_address,
+                            c.resource_url,       
+                            COALESCE(a.alternative_names, ARRAY[]::VARCHAR[]) AS alternative_names,
+                            COALESCE(cl.claimants, ARRAY[]::VARCHAR[]) AS claimant,
+                            COALESCE(cl.claimant_roles, ARRAY[]::VARCHAR[]) AS claimant_role,
+                            COALESCE(cl.claimant_statuses, ARRAY[]::BOOLEAN[]) AS claimant_status,
+                            COALESCE(t.tender_ids, ARRAY[]::VARCHAR[]) AS tender_ids,
+                            COALESCE(t.tender_titles, ARRAY[]::VARCHAR[]) AS tender_titles
+                        FROM regx_company c
+                        LEFT JOIN (
+                            SELECT 
+                                company_id,
+                                array_agg(DISTINCT alternative_name) AS alternative_names
+                            FROM regx_alternative_names
+                            GROUP BY company_id
+                        ) a ON c.id = a.company_id
+                        LEFT JOIN (
+                            SELECT 
+                                c_id,
+                                array_agg(claimant ORDER BY id) AS claimants,
+                                array_agg(claimant_role ORDER BY id) AS claimant_roles,
+                                array_agg(status ORDER BY id) AS claimant_statuses
+                            FROM regx_claimants
+                            GROUP BY c_id
+                        ) cl ON c.id = cl.c_id
+                        LEFT JOIN (
+                            SELECT
+                                company_id,
+                                array_agg(tender_id ORDER BY id) AS tender_ids,
+                                array_agg(tender_title ORDER BY id) AS tender_titles
+                            FROM regx_tender
+                            GROUP BY company_id
+                        ) t ON c.id = t.company_id
+                        WHERE c.id = %s
+                        ORDER BY c.created DESC;
+                    """, (company_id,))
                     company = cursor.fetchone()
                     if company:
                         company_details = {
@@ -180,10 +191,13 @@ class AdminController:
                             "vat_number": company[6],
                             "tax_id": company[7],
                             "company_address": company[8],
-                            "alternative_names": company[9] if company[9] else [],
-                            "claimant": company[10] if company[10] else [],
-                            "claimant_role": company[11] if company[11] else [],
-                            "claimant_status": company[12] if company[12] else []
+                            "resource_url": company[9],
+                            "alternative_names": company[10] if company[10] else [],
+                            "claimant": company[11] if company[11] else [],
+                            "claimant_role": company[12] if company[12] else [],
+                            "claimant_status": company[13] if company[13] else [],
+                            "tender_ids": company[14] if company[14] else [],
+                            "tender_titles": company[15] if company[15] else []
                         }
                         return tk.render('view_profile.html', extra_vars={'company': company_details})
                     else:

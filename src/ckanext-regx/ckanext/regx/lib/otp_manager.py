@@ -2,10 +2,12 @@ import os
 import smtplib
 import random
 import logging
+import uuid
 from email.mime.text import MIMEText
-from flask import session
+from flask import session, jsonify
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
+
 
 log = logging.getLogger(__name__)
 
@@ -214,3 +216,8 @@ class OTPManager:
         # Strip trailing slash if it exists
         domain = domain.rstrip('/')
         return domain
+
+    @staticmethod
+    def generate_uuid():
+        new_uuid = str(uuid.uuid4())
+        return new_uuid

@@ -38,40 +38,23 @@ def connect_to_db():
 # Extra
 
 
-def create_sherry_table(connection):
-    """
-    Create the 'sherry' table in the database if it doesn't already exist.
-    """
-    create_table_query = """
-    CREATE TABLE IF NOT EXISTS sherry (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        address TEXT NOT NULL,
-        created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    """
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(create_table_query)
-            connection.commit()
-            log.info("Table 'sherry' created successfully!")
-    except Exception as e:
-        connection.rollback()
-        log.error(f"Error creating table 'sherry': {e}")
-
-
 def create_company_table(connection):
     """
     Create the 'regx_company' table in the database if it doesn't already exist.
     """
     create_table_query = """
     CREATE TABLE IF NOT EXISTS regx_company (
-        id SERIAL PRIMARY KEY,
-        company_name TEXT NOT NULL,
-        website TEXT NOT NULL,
-        address TEXT NOT NULL,
+        id VARCHAR(255) PRIMARY KEY,
+        company_name TEXT ,
+        website TEXT ,
+        email_address TEXT ,
         status BOOLEAN DEFAULT FALSE, -- Default to inactive
         created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        vat_number TEXT ,
+        tax_id TEXT ,
+        company_address TEXT ,
+        is_claimed BOOLEAN DEFAULT FALSE, -- Default to inactive,
+        profile_created_by TEXT
     );
     """
     try:
@@ -82,28 +65,6 @@ def create_company_table(connection):
     except Exception as e:
         connection.rollback()
         log.error(f"Error creating table 'regx_company': {e}")
-
-
-def create_claimant_table(connection):
-    create_table_query = """
-        CREATE TABLE IF NOT EXISTS regx_claimants (
-            id SERIAL PRIMARY KEY,
-            company_name TEXT NULL,
-            website TEXT  NULL,
-            email_address TEXT NULL,
-            claimant_email TEXT NULL,
-            claimant_role TEXT NULL,
-            created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        """
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(create_table_query)
-            connection.commit()
-            log.info("Table 'regx_claimants' created successfully!")
-    except Exception as e:
-        connection.rollback()
-        log.error(f"Error creating table 'regx_claimants': {e}")
 
 
 def close_db_connection(connection):

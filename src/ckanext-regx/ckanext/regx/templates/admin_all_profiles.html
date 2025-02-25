@@ -135,6 +135,10 @@
             },
             columns: [
                 { data: 'id', render: (data, type, row, meta) => meta.row + 1 },
+                // {
+                //     data: 'uuid',
+                //     visible: false
+                // },
                 {
                     data: 'company_name',
                     render: function (data, type, row) {
@@ -250,6 +254,7 @@
             <thead>
                 <tr>
                     <th>SR No</th>
+                    <!-- <th style="display: none;">UUID</th> -->
                     <th>Company Name</th>
                     <th>Email</th>
                     <th>Website</th>

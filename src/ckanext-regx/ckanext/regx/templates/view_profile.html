@@ -151,28 +151,6 @@
         background-color: #f8fafc;
     }
 
-    /* Pill-style statuses */
-    .status-badge {
-        font-weight: 500;
-        border-radius: 9999px;
-        padding: 0.45rem 0.75rem;
-    }
-
-    .bg-open {
-        background-color: #cce0ff;
-        color: #084298;
-    }
-
-    .bg-paid {
-        background-color: #d1fae5;
-        color: #065f46;
-    }
-
-    .bg-inactive {
-        background-color: #f3f4f6;
-        color: #4b5563;
-    }
-
     .rounded-table {
         border-radius: 6px;
         /* The corner radius you want */
@@ -291,66 +269,42 @@
         {% endif %}
 
         <!-- Modern Tenders Table -->
-        <div class="profile-card modern-card p-3 mb-4">
-            <h4 class="mb-4">Tenders</h4>
+        <div class="profile-card modern-card p-3 mb-3">
+            <h4 class="mb-3">Tenders</h4>
             <div class="table-responsive">
-                <table class="table align-middle table-borderless modern-table rounded-table ">
+                <table class="table align-middle table-borderless modern-table rounded-table"
+                    style="width: 100%; table-layout: fixed;">
                     <thead class="table-header">
                         <tr>
-                            <th scope="col">Tender ID</th>
-                            <th scope="col">Tender Name</th>
-                            <th scope="col">Status</th>
-                            <th scope="col" class="text-end">Bid Amount</th>
+                            <th scope="col" style="width:33%;">SR NO</th>
+                            <th scope="col" style="width:33%;">Tender ID</th>
+                            <th scope="col" style="width:33%;">Tender Name</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Example static rows; replace with dynamic data as needed -->
+                        {% if company.tender_ids and company.tender_titles %}
+                        {% for i in range(company.tender_ids|length) %}
                         <tr>
                             <td>
-                                <strong>TDR-001</strong><br />
-                                <small class="text-muted">#12345</small>
+                                <span>{{ i + 1 }}.</span>
                             </td>
-                            <td>Metro Construction</td>
                             <td>
-                                <span class="badge status-badge bg-open">Open</span>
+                                {{ company.tender_ids[i] }}
                             </td>
-                            <td class="text-end">
-                                <strong>$78.00</strong><br />
-                                <small class="text-muted">USD</small>
-                            </td>
+                            <td>{{ company.tender_titles[i] }}</td>
                         </tr>
+                        {% endfor %}
+                        {% else %}
                         <tr>
-                            <td>
-                                <strong>TDR-002</strong><br />
-                                <small class="text-muted">#12346</small>
-                            </td>
-                            <td>Highway Expansion</td>
-                            <td>
-                                <span class="badge status-badge bg-paid">Paid</span>
-                            </td>
-                            <td class="text-end">
-                                <strong>$40.00</strong><br />
-                                <small class="text-muted">USD</small>
-                            </td>
+                            <td colspan="4">No tenders found</td>
                         </tr>
-                        <tr>
-                            <td>
-                                <strong>TDR-003</strong><br />
-                                <small class="text-muted">#12347</small>
-                            </td>
-                            <td>Bridge Repair</td>
-                            <td>
-                                <span class="badge status-badge bg-inactive">Inactive</span>
-                            </td>
-                            <td class="text-end">
-                                <strong>$85.00</strong><br />
-                                <small class="text-muted">USD</small>
-                            </td>
-                        </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
+
+
 
         <!-- Company Address with Map -->
         <div class="profile-card">
@@ -368,7 +322,7 @@
 
         <!-- Download Section -->
         <div class="download-section">
-            <button class="btn-download" onclick="downloadDataset({{ company.id }})">
+            <button class="btn-download" onclick="downloadDataset('{{ company.resource_url }}')">
                 <i class="fas fa-download me-2"></i>Download Dataset
             </button>
         </div>
@@ -376,8 +330,8 @@
 </div>
 
 <script>
-    function downloadDataset(companyId) {
-        window.location.href = `/regx/download_dataset/${companyId}`;
+    function downloadDataset(resourceUrl) {
+        window.location.href = resourceUrl;
     }
     function ensureHttps(url) {
         if (!url) return url; // Handle empty URLs

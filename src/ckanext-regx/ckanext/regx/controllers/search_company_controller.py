@@ -13,14 +13,14 @@ class CompanySearchController:
 
         if request.method == 'POST':
             form_submitted = True  # Set form_submitted to True when POST is handled
-            profile_id = request.form.get('profile_id')
+            company_name = request.form.get('company_name')
             connection = connect_to_db()
             if connection:
                 try:
                     with connection.cursor() as cursor:
                         cursor.execute(
                             "SELECT company_name, email_address, website, created, id FROM regx_company WHERE company_name ILIKE %s AND status=TRUE AND is_claimed=TRUE",
-                            (f"%{profile_id}%",)
+                            (f"%{company_name}%",)
                         )
                         company = cursor.fetchall()
                         print(company)
