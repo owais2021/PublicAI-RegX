@@ -1,0 +1,12 @@
+#### Ckan API Request Dependencies ####
+requests
+psycopg2-binary
+ckanapi
+
+#### Crawler Dependencies ####
+requests
+beautifulsoup4
+google-api-python-client
+psycopg2
+ckanapi
+requests
