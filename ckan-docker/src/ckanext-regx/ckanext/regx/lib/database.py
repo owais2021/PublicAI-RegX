@@ -77,12 +77,12 @@ def create_company_table(connection):
 def create_tender_table(connection):
     ###### Create the `regx_tender` table #####
     create_tender_table_query = """
-    CREATE TABLE IF NOT EXISTS regx_tender (
+        CREATE TABLE IF NOT EXISTS regx_tender (
         id SERIAL PRIMARY KEY,
         tender_id TEXT NOT NULL,
         tender_title TEXT NOT NULL,
         company_name TEXT NOT NULL,
-        company_id INT REFERENCES regx_company(id),
+        company_id VARCHAR(255) REFERENCES regx_company(id),
         CONSTRAINT unique_tender UNIQUE (tender_id, company_name)
     );
     """
@@ -98,10 +98,11 @@ def create_tender_table(connection):
 def create_alternative_names_table(connection):
     ###### Create the `regx_alternative_names` table #####
     create_alternative_names_table_query = """
-    CREATE TABLE IF NOT EXISTS regx_alternative_names (
+        CREATE TABLE IF NOT EXISTS regx_alternative_names (
         id SERIAL PRIMARY KEY,
-        company_id INT NOT NULL,
-        alternative_name  TEXT NOT NULL,
+        company_id VARCHAR(255) NOT NULL,
+        alternative_name TEXT NOT NULL,
+        FOREIGN KEY (company_id) REFERENCES regx_company(id)
     );
     """
     try:
