@@ -1,0 +1,249 @@
+{% extends "page.html" %}
+
+{% block styles %}
+{{ super() }}
+<!-- Ensure claim_form.css is loaded after parent styles for higher specificity -->
+<link rel="stylesheet" href="{{ h.url_for_static('/css/claim_form.css') }}" media="screen">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+<style>
+    /* Use higher specificity to avoid overrides from parent templates */
+    .regx-container .main-content .modern-form {
+        max-width: 650px;
+        margin: 40px auto;
+        background: linear-gradient(135deg, #ffffff, #f8f9fa);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease;
+    }
+
+    .regx-container .main-content .modern-form:hover {
+        transform: translateY(-2px);
+    }
+
+    .regx-container .main-content .form-group {
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    .regx-container .main-content .modern-form label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 8px;
+        color: #2c3e50;
+        font-size: 0.95rem;
+    }
+
+    .regx-container .main-content .modern-form input,
+    .regx-container .main-content .modern-form textarea {
+        width: 100%;
+        padding: 12px 15px;
+        font-size: 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        background: #fff;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .regx-container .main-content .modern-form input:focus,
+    .regx-container .main-content .modern-form textarea:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        outline: none;
+    }
+
+    .regx-container .main-content .claim-form-btn {
+        background: linear-gradient(to right, #197986, #3ac9ed);
+        color: white;
+        padding: 12px 24px;
+        font-size: 1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .regx-container .main-content .claim-form-btn:hover:not(.loading) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .regx-container .main-content .claim-form-btn.loading {
+        background: #94a3b8;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .regx-container .main-content h1 {
+        color: #1e293b;
+        font-size: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .regx-container .main-content #otp-verification {
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Fallback styles in case CSS file fails to load */
+    .modern-form-fallback {
+        border: 1px solid #ddd;
+        padding: 20px;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% endblock %}
+
+{% block content %}
+<div class="regx-container">
+    {% include "side_nav.html" %}
+    <div class="main-content">
+        <div id="claim-profile-container">
+            <h1>Claim Your Profile</h1>
+
+            <form id="claim_profile" action="/regx/submit_claim_profile" method="post"
+                class="modern-form modern-form-fallback">
+                {{ h.csrf_input() }}
+                <div class="form-group">
+                    <label for="website">Official Company Website</label>
+                    <input type="url" id="website" name="website" placeholder="https://yourcompany.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Claimant Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="you@company.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Role in Company</label>
+                    <input type="text" id="role" name="role" placeholder="e.g., HR Manager" required>
+                </div>
+                <button type="submit" class="claim-form-btn">Request OTP</button>
+            </form>
+
+            <div id="otp-verification" style="display: none;">
+                <form id="otp_form" action="/regx/verify_otp" method="post" class="modern-form modern-form-fallback">
+                    {{ h.csrf_input() }}
+                    <div class="form-group">
+                        <label for="otp">Enter OTP</label>
+                        <input type="text" id="otp" name="otp" placeholder="Enter 4-digit OTP" maxlength="4" required>
+                    </div>
+                    <button type="submit" class="claim-form-btn">Verify OTP</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Fallback check to ensure JavaScript is running
+    console.log("Claim Profile Form Script Loaded");
+
+    function showAlert(icon, title, text, config = {}) {
+        const defaultConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: icon === 'success' ? 2500 : 3500,
+            timerProgressBar: true,
+            background: '#fff',
+            iconColor: icon === 'success' ? '#10b981' : '#ef4444'
+        };
+
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            ...defaultConfig,
+            ...config
+        });
+    }
+
+    document.querySelector("#claim_profile").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitButton = form.querySelector(".claim-form-btn");
+
+        submitButton.classList.add("loading");
+        submitButton.textContent = "Sending OTP...";
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.status) {
+                showAlert('success', 'OTP Sent!', result.message);
+                form.style.display = "none";
+                document.querySelector("#otp-verification").style.display = "block";
+            } else {
+                showAlert('error', 'Failed', result.message || 'Something went wrong');
+            }
+        } catch (error) {
+            showAlert('error', 'Error', 'Network error occurred');
+            console.error("Form submission error:", error);
+        } finally {
+            submitButton.classList.remove("loading");
+            submitButton.textContent = "Request OTP";
+            submitButton.disabled = false;
+        }
+    });
+
+    document.querySelector("#otp_form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitButton = form.querySelector(".claim-form-btn");
+
+        submitButton.classList.add("loading");
+        submitButton.textContent = "Verifying...";
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (result.status && result.redirect_url) {
+                showAlert('success', 'Verified!', result.message);
+                setTimeout(() => {
+                    window.location.href = result.redirect_url;
+                }, 1500);
+            } else {
+                showAlert('error', 'Invalid OTP', result.error || 'Please try again');
+            }
+        } catch (error) {
+            showAlert('error', 'Error', 'Verification failed');
+            console.error("OTP verification error:", error);
+        } finally {
+            submitButton.classList.remove("loading");
+            submitButton.textContent = "Verify OTP";
+            submitButton.disabled = false;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends "page.html" %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+    .modern-form {
+        max-width: 600px;
+        margin: 20px auto;
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .modern-form .form-group {
+        margin-bottom: 15px;
+    }
+
+    .modern-form label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .modern-form input,
+    .modern-form textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        background: #fcfbfb;
+        border: 1px solid #b51919;
+        border-radius: 4px;
+    }
+
+    .modern-form input:focus,
+    .modern-form textarea:focus {
+        border-color: #007bff;
+        outline: none;
+    }
+
+    .modern-form .btn-submit {
+        display: inline-block;
+        background-color: #0b7a8b;
+        color: #fff;
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .modern-form .btn-submit:hover {
+        background-color: #0056b3;
+    }
+
+    .modern-form .btn-submit.loading {
+        background-color: #f0ad4e;
+        cursor: not-allowed;
+    }
+
+    input[readonly] {
+        cursor: not-allowed;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="red" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 20px 20px;
+        padding-right: 35px;
+    }
+</style>
+<!-- alert Library -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% endblock %}
+
+{% block content %}
+<div class="regx-container">
+    {% include "side_nav.html" %}
+    <div class="main-content">
+        <h1>Verify Company Details</h1>
+        <form action="{{ url_for('regx.update_claim_form', company_id=company_obj[0]) }}" method="post"
+            class="modern-form" id="update_claim_f">
+            {{ h.csrf_input() }}
+            <div class="form-group">
+                <label for="company_name">Company Name</label>
+                <input type="text" id="company_name" name="company_name" value="{{ company_obj[1] }}" required readonly>
+            </div>
+            <div class="form-group">
+                <label for="website">Website</label>
+                <input type="url" id="website" name="website" value="{{ company_obj[2] }}" required readonly>
+            </div>
+            <div class="form-group">
+                <label for="email_address">Company Email</label>
+                <input type="email" id="email_address" name="email_address" value="{{ company_obj[3] }}" required
+                    readonly>
+            </div>
+            <div class="form-group">
+                <label for="company_address">Company Address</label>
+                <input type="text" id="company_address" name="company_address"
+                    value="{{ company_obj[4] if company_obj[4] else 'Address Not found' }}" required readonly>
+            </div>
+            <button type="submit" id='update_claim_btn' class="btn-submit">Claim Profile</button>
+        </form>
+    </div>
+</div>
+<script>
+    // Function to ensure website URL starts with https://
+    function ensureHttps(url) {
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            return `https://${url}`;
+        }
+        return url.replace('http://', 'https://');
+    }
+    // Update website field value on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        const websiteInput = document.getElementById('website');
+        if (websiteInput) {
+            websiteInput.value = ensureHttps(websiteInput.value);
+        }
+    });
+    // Global Alert Function
+    function showAlert(icon, title, text, config = {}) {
+        const defaultConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: icon === 'success' ? 3000 : 4000,
+            timerProgressBar: true,
+            background: '#f8f9fa',
+            iconColor: icon === 'success' ? '#28a745' : '#dc3545'
+        };
+
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            ...defaultConfig,
+            ...config
+        });
+    }
+
+    // Handle Claimaint Submission after verify details
+    document.querySelector("#update_claim_f").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitButton = document.getElementById("update_claim_btn");
+
+        // Set button to loading state
+        submitButton.classList.add("loading");
+        submitButton.textContent = "Submitting...";
+        submitButton.disabled = true;
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.redirect_url) {
+                // alert(result.message); // Show success message
+                showAlert('success', 'Success!', result.message);
+                window.location.href = result.redirect_url; // Redirect to the specified URL
+            } else {
+                // alert(result.message); // Show error message
+                showAlert('error', 'Error!', result.message || 'An unexpected error occurred.');
+
+            }
+        } catch (error) {
+            // alert("An unexpected error occurred. Please try again.");
+            showAlert('error', 'Error!', 'An unexpected error occurred. Please try again.');
+
+            console.error("Error in form submission:", error);
+        }
+    });
+
+</script>
+{% endblock %}

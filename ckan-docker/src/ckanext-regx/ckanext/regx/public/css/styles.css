@@ -1,0 +1,259 @@
+/* General Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f6f9;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+/* Container for side nav and content */
+.regx-container {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* Side Navigation Styling */
+.side-nav {
+    width: 220px;
+    background-color: #1a5c78;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: #fff;
+}
+
+.side-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.side-nav ul li {
+    margin-bottom: 15px;
+}
+
+.side-nav ul li a {
+    text-decoration: none;
+    color: #fff;
+    font-size: 16px;
+    padding: 10px;
+    display: block;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.side-nav ul li a:hover {
+    background-color: #599eb5;
+}
+
+/* Main Content Styling */
+.main-content {
+    flex: 1;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Styling */
+h1 {
+    color: #0b4852;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.modern-form .form-group {
+    margin-bottom: 15px;
+}
+
+.modern-form label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.modern-form input,
+.modern-form textarea {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.modern-form input:focus,
+.modern-form textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    outline: none;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+.btn-submit:hover {
+    background-color: #0056b3;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .regx-container {
+        flex-direction: column;
+    }
+
+    .side-nav {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+}
+
+/* DataTable Styling */
+/* DataTable Styling */
+.table-container {
+    margin: 20px 0;
+}
+
+.dataTables_wrapper {
+    font-family: Arial, sans-serif;
+    margin-top: 15px;
+}
+
+.dataTables_length select {
+    padding: 5px;
+    margin-right: 5px;
+}
+
+.dataTables_filter input {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    margin-left: 10px;
+}
+
+.dataTables_paginate {
+    margin-top: 15px;
+}
+
+.dataTables_paginate .paginate_button {
+    background-color: #007bff;
+    color: white !important;
+    border-radius: 4px;
+    padding: 5px 10px;
+    margin: 0 5px;
+}
+
+.dataTables_paginate .paginate_button:hover {
+    background-color: #0056b3;
+}
+
+.dataTables_info {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+/* Add separators between rows */
+#profilesTable tbody tr {
+    border-bottom: 1px solid #ddd;
+}
+
+/* Button styles for View Profile */
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+}
+
+/* flash messages */
+.flash-messages .alert {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.flash-messages .alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.flash-messages .alert-error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+/* Claim Form Container Styling */
+.claim-form-container {
+    margin: 20px auto;
+    width: 50%;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.claim-form-container h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #007bff;
+}
+
+/* Claim Form Group Styling */
+.claim-form-group {
+    margin-bottom: 15px;
+}
+
+.claim-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.claim-form-group input {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Submit Button Styling */
+.claim-form-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    color: white;
+    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.claim-form-btn:hover {
+    background-color: #0056b3;
+}

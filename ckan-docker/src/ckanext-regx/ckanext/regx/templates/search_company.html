@@ -1,0 +1,234 @@
+{% extends "page.html" %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+    .search-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 50px;
+    }
+
+    .search-bar {
+        width: 500px;
+        padding: 15px;
+        font-size: 18px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        outline: none;
+    }
+
+    .search-button {
+        padding: 15px 25px;
+        font-size: 18px;
+        cursor: pointer;
+        background-color: #0b7a8b;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        margin-left: 10px;
+        transition: background-color 0.3s ease;
+    }
+
+    .search-button:hover {
+        background-color: #0056b3;
+    }
+
+    .search-results {
+        margin-top: 50px;
+        text-align: center;
+    }
+
+    table {
+        margin: 20px auto;
+        border-collapse: collapse;
+        width: 80%;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+    }
+
+    th,
+    td {
+        border: 1px solid #ddd;
+        padding: 12px 16px;
+        text-align: center;
+    }
+
+    th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+
+    td {
+        background-color: #ffffff;
+    }
+
+
+    /* Note Box Styles */
+    .note-box {
+        margin-top: 20px;
+        padding: 20px;
+        background-color: #e3f2fd;
+        /* Light blue background */
+        border: 1px solid #90caf9;
+        /* Light blue border */
+        border-radius: 8px;
+        text-align: center;
+        width: 80%;
+        margin-left: auto;
+        margin-right: auto;
+        font-size: 16px;
+        color: #1976d2;
+        /* Dark blue text */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        /* Subtle shadow */
+    }
+
+    .note-box strong {
+        font-weight: bold;
+        color: #0d47a1;
+        /* Darker blue for "Note:" */
+    }
+</style>
+<!-- alert Library -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Global Alert Function
+    function showAlert(icon, title, text, config = {}) {
+        const defaultConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: icon === 'success' ? 3000 : 4000,
+            timerProgressBar: true,
+            background: '#f8f9fa',
+            iconColor: icon === 'success' ? '#28a745' : '#dc3545'
+        };
+
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            ...defaultConfig,
+            ...config
+        });
+    }
+
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="regx-container">
+    <!-- <h1>Search Company Profiles by ID</h1> -->
+    {% include "side_nav.html" %}
+    <div class="main-content">
+        <!-- Note Box -->
+        <div class="note-box">
+            <p><strong>Note:</strong> A company profile can only be searched and edited if it is active in our system
+                and owned by a company official.</p>
+        </div>
+        <div class="search-container">
+            <form method="POST">
+                {{ h.csrf_input() }}
+                <input type="text" id="company_name" name="company_name" class="search-bar"
+                    placeholder="Enter Company Name" required>
+                <button type="submit" class="search-button">Search</button>
+            </form>
+        </div>
+
+
+        {% if form_submitted %}
+        {% if company %}
+        <div class="search-results">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Company Name</th>
+                        <th>Address</th>
+                        <th>Website</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in company %}
+                    <tr>
+                        <td>{{ company[0] }}</td>
+                        <td>{{ company[1] }}</td>
+                        <td>
+                            <a href="{{ company[2] }}" target="_blank" class="website-link">{{ company[2] }}</a>
+                        </td>
+                        <td>{{ company[3].strftime('%Y-%m-%d') if company[3] else 'N/A' }}</td>
+                        <td>
+                            {% if c.user or c.userobj.sysadmin %}
+                            <a href="{{ url_for('regx.edit_company', company_id=company[4]) }}"
+                                class="btn btn-primary ">
+                                Request Edit
+                            </a>
+                            {% endif %}
+                            <a href="{{url_for('regx.view_profile', company_id=company[4])}}"
+                                class="btn btn-success view-profile-btn">
+                                View Profile
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="search-results">
+            <p>No Record Found.</p>
+            <script>
+                showAlert('error', 'Error!', 'No Record Found');
+            </script>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Function to ensure website URL starts with https://
+    function ensureHttps(url) {
+        if (!url) return url; // Handle empty URLs
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            return `https://${url}`;
+        }
+        return url.replace('http://', 'https://');
+    }
+
+    // Function to update website links
+    function updateWebsiteLinks() {
+        const websiteLinks = document.querySelectorAll('a.website-link');
+        websiteLinks.forEach(link => {
+            link.href = ensureHttps(link.href);
+            link.textContent = ensureHttps(link.textContent);
+        });
+    }
+
+    // Observe changes to the search results container
+    const observer = new MutationObserver((mutationsList) => {
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                // Search results have been updated
+                updateWebsiteLinks();
+            }
+        }
+    });
+
+    // Start observing the search results container
+    const searchResultsContainer = document.getElementById('search-results-container');
+    if (searchResultsContainer) {
+        observer.observe(searchResultsContainer, { childList: true });
+    }
+
+    // Run on initial page load (in case there are pre-loaded results)
+    document.addEventListener('DOMContentLoaded', updateWebsiteLinks);
+</script>
+{% endblock %}

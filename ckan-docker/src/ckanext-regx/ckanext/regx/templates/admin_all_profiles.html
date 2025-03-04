@@ -1,0 +1,271 @@
+{% extends "page.html" %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<div id="loader" style="display: none;">
+    <div class="spinner"></div>
+</div>
+<style>
+    .dataTable {
+        width: 100%;
+        margin: 20px 0;
+        border-collapse: collapse;
+        border-radius: 5px;
+        overflow: hidden;
+        border: 1px solid #ddd;
+    }
+
+    .dataTable th {
+        background-color: #0b7a8b;
+        color: white;
+        font-weight: bold;
+    }
+
+    .btn {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-sm {
+        font-size: 12px;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .btn-info {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .fa {
+        padding-right: 5px;
+    }
+
+    /* Spinner CSS */
+    #loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<!-- alert Library -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Global Alert Function
+    function showAlert(icon, title, text, config = {}) {
+        const defaultConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: icon === 'success' ? 3000 : 4000,
+            timerProgressBar: true,
+            background: '#f8f9fa',
+            iconColor: icon === 'success' ? '#28a745' : '#dc3545'
+        };
+
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            ...defaultConfig,
+            ...config
+        });
+    }
+    // Function to ensure website URL starts with https://
+    function ensureHttps(url) {
+        if (!url) return url; // Handle empty URLs
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            return `https://${url}`;
+        }
+        return url.replace('http://', 'https://');
+    }
+
+    jQuery(document).ready(function ($) {
+        const csrfToken = $('input[name="_csrf_token"]').val();
+        $('#profilesTable').DataTable({
+            ajax: {
+                url: '/regx/admin_all_profiles',
+                type: 'GET',
+                dataSrc: 'data'
+            },
+            columns: [
+                { data: 'id', render: (data, type, row, meta) => meta.row + 1 },
+                // {
+                //     data: 'uuid',
+                //     visible: false
+                // },
+                {
+                    data: 'company_name',
+                    render: function (data, type, row) {
+                        let alternativeNamesHtml = '';
+                        if (row.alternative_names && row.alternative_names.length > 0) {
+                            const namesList = row.alternative_names.map(name => `<li>${name}</li>`).join('');
+                            alternativeNamesHtml = `<strong>Alternative Names:</strong><ul>${namesList}</ul>`;
+                        }
+                        return `${data}<br>${alternativeNamesHtml}`;
+                    }
+                },
+                { data: 'email_address' },
+                // {
+                //     data: 'claimant',
+                // },
+                {
+                    data: 'website',
+                    render: function (data, type, row) {
+                        const secureUrl = ensureHttps(data);
+                        return `<a href="${secureUrl}" target="_blank">${secureUrl}</a>`;
+                    }
+                },
+                {
+                    data: 'status',
+                    render: function (data) {
+                        return data ? 'Active' : 'Inactive';
+                    }
+                },
+                {
+                    data: 'created',
+                    visible: false
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `
+                            <button class="btn btn-sm btn-status ${row.status ? 'btn-danger' : 'btn-success'}"
+                                    data-id="${row.id}" 
+                                    data-status="${!row.status}">
+                                ${row.status ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button class="btn btn-sm btn-info" onclick="downloadDataset(${row.id})">
+                                Download Dataset
+                            </button>
+                        `;
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `<a href="/regx/view_profile/${row.id}" target="_blank" class="btn btn-sm btn-success">
+                                    <i class="fas fa-eye"></i>
+                                </a>`;
+                    },
+                    orderable: false
+                }
+            ]
+        });
+        // Toggle Status Button
+        $('#profilesTable').on('click', '.btn-status', function () {
+            const button = $(this);
+            const companyId = button.data('id');
+            const newStatus = button.data('status');
+            // const claimant = button.data('claimant');
+            // const company_name = button.data('company_name');
+
+            // Show the loader
+            $('#loader').show();
+
+            $.ajax({
+                url: '/regx/toggle_status',
+                type: 'POST',
+                headers: {
+                    'X-CSRF-Token': csrfToken
+                },
+                data: {
+                    company_id: companyId,
+                    new_status: newStatus,
+                    // claimant: claimant,
+                    // company_name: company_name
+                },
+                success: function (response) {
+                    // alert(response.message);
+                    showAlert('success', 'Success!', response.message);
+                    $('#profilesTable').DataTable().ajax.reload();
+                },
+                error: function (xhr) {
+                    // alert('Error: ' + xhr.responseJSON.error);
+                    showAlert('error', 'Error!', xhr.responseJSON.error || 'An unexpected error occurred.');
+
+                },
+                complete: function () {
+                    // Hide the loader when the request is complete
+                    $('#loader').hide();
+                }
+
+            });
+        });
+    });
+    function downloadDataset(companyId) {
+        window.location.href = `/regx/download_dataset/${companyId}`;
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="regx-container">
+    {% include "side_nav.html" %}
+    <div class="main-content">
+        <h1>Company Datasets</h1>
+        {{ h.csrf_input() }}
+        <table id="profilesTable" class="dataTable display">
+            <thead>
+                <tr>
+                    <th>SR No</th>
+                    <!-- <th style="display: none;">UUID</th> -->
+                    <th>Company Name</th>
+                    <th>Email</th>
+                    <th>Website</th>
+                    <th>Status</th>
+                    <th style="display: none;">Created Date</th>
+                    <th>Actions</th>
+                    <th>View Profile</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

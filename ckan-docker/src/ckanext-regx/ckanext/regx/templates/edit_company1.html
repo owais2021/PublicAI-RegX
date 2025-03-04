@@ -1,0 +1,405 @@
+{% extends "page.html" %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+    .modern-form {
+        max-width: 800px;
+        margin: 20px auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .modern-form .form-group {
+        margin-bottom: 20px;
+    }
+
+    .modern-form label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+    }
+
+    .modern-form input,
+    .modern-form textarea {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background-color: #f9f9f9;
+        transition: border-color 0.3s ease;
+    }
+
+    .modern-form input:focus,
+    .modern-form textarea:focus {
+        border-color: #0b7a8b;
+        outline: none;
+        background-color: #fff;
+    }
+
+    .modern-form .btn-submit {
+        display: inline-block;
+        background-color: #0b7a8b;
+        color: #fff;
+        padding: 12px 24px;
+        font-size: 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .modern-form .btn-submit:hover {
+        background-color: #095f6b;
+    }
+
+    .send_otp_btn.loading {
+        background-color: #f0ad4e;
+        cursor: not-allowed;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 20px;
+    }
+
+    .form-column {
+        flex: 1;
+    }
+
+    .form-column:first-child {
+        margin-right: 10px;
+    }
+
+    .form-column:last-child {
+        margin-left: 10px;
+    }
+
+    .alternative-names {
+        margin-top: 10px;
+    }
+
+    .alternative-names input {
+        margin-bottom: 10px;
+    }
+
+    #otp_input_section {
+        margin-top: 20px;
+    }
+
+    .dynamic-alt-name {
+        position: relative;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .add-alt-name {
+        background: #3ec1d5;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .remove-alt-name {
+        background: #ec5c6b;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .dynamic-alt-name input {
+        flex-grow: 1;
+        min-width: 0;
+        /* Fix flex item overflow */
+    }
+
+    /* Specific rule for address and professional email fields */
+    #company_address,
+    #email,
+    #vat,
+    #tax_id,
+    #alt_names {
+        background-color: #fff !important;
+    }
+
+    /* Custom cursor for readonly fields */
+    input[readonly] {
+        cursor: not-allowed;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="red" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 20px 20px;
+        padding-right: 35px;
+    }
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- alert Library -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Global Alert Function
+    function showAlert(icon, title, text, config = {}) {
+        const defaultConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: icon === 'success' ? 3000 : 4000,
+            timerProgressBar: true,
+            background: '#f8f9fa',
+            iconColor: icon === 'success' ? '#28a745' : '#dc3545'
+        };
+
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            ...defaultConfig,
+            ...config
+        });
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="regx-container">
+    {% include "side_nav.html" %}
+    <div class="main-content">
+        <h1>Edit Company Details</h1>
+
+        <!-- Combined Form -->
+        <form id="edit_company_form" action="{{ url_for('regx.edit_company', company_id=company[0]) }}" method="post"
+            class="modern-form">
+            {{ h.csrf_input() }} <!-- Ensure CSRF protection -->
+            <input type="hidden" id="company_id" name="company_id" value="{{ company[0] }}">
+
+            <div class="form-row">
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="company_name">Company Name:</label>
+                        <input type="text" id="company_name" name="company_name" value="{{ company[1] }}" required
+                            readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="website">Website:</label>
+                        <input type="url" id="website" name="website" value="{{ company[2] }}" required readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Official Contact Email:</label>
+                        <input type="text" id="company_email" name="company_email" value="{{ company[3] }}" required
+                            readonly>
+                    </div>
+                </div>
+
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="vat">VAT Number:</label>
+                        <input type="text" id="vat" name="vat" value="{{ company[4] }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="claimant_role">Tax ID:</label>
+                        <input type="text" id="tax_id" name="tax_id" value="{{ company[5] }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="company_address">Company Address:</label>
+                        {% if company[6] %}
+                        <input type="text" id="company_address" name="company_address" placeholder="e.g Luisental 28359"
+                            value="{{ company[6] }}">
+                        {%else%}
+                        <input type="text" id="company_address" name="company_address"
+                            placeholder="e.g Luisental 28359">
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+
+            {% if company[7] %}
+            <div class="form-group alternative-names">
+                <label for="alternative_names">Alternative Names:</label>
+                {% for name in company[7] %}
+                <input type="text" id="alternative_names" name="alternative_names" value="{{ name }}" readonly>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <!-- Dynamic Alternative Names Section -->
+            <div class="form-group">
+                <label>
+                    Alternative Company Names
+                    <button type="button" class="add-alt-name" onclick="addAltName()">+</button>
+                </label>
+                <div id="altNamesContainer">
+                    <div class="dynamic-alt-name">
+                        <input type="text" id="alt_names" name="alt_names[]" placeholder="Alternative company name" />
+                        <button type="button" class="remove-alt-name" onclick="removeAltName(this)">−</button>
+                    </div>
+                </div>
+            </div>
+            <!-- End -->
+            <div class="form-group">
+                <label for="email">Your Email:</label>
+                <input type="email" id="email" name="email" placeholder="e.g example@domain.com" required>
+            </div>
+
+            <button type="submit" id="send_otp_btn" class="btn-submit">Send OTP</button>
+        </form>
+
+        <div id="otp_input_section" class="form-group" style="display: none;">
+            <form id="otp-verification_form" class="modern-form" action="/regx/verify_otp_edit" method="post">
+                {{ h.csrf_input() }}
+                <label for="otp">Enter OTP:</label>
+                <input type="text" id="otp" name="otp" placeholder="Enter the OTP sent to your email" maxlength="4"
+                    required>
+                <button style="margin-top: 10px;" type="submit" id="verify_otp_btn" class="btn-submit">Verify
+                    OTP</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Dynamic Alt Fields
+    function addAltName() {
+        const container = document.getElementById('altNamesContainer');
+        const newField = document.createElement('div');
+        newField.className = 'dynamic-alt-name';
+        newField.innerHTML = `
+            <input type="text" name="alt_names[]" placeholder="Alternative company name" />
+            <button type="button" class="remove-alt-name" onclick="removeAltName(this)">−</button>
+        `;
+        container.appendChild(newField);
+    }
+    function removeAltName(button) {
+        const fields = document.querySelectorAll('.dynamic-alt-name');
+        if (fields.length > 1) {
+            button.closest('.dynamic-alt-name').remove();
+        }
+    }
+
+    // Function to ensure website URL starts with https://
+    function ensureHttps(url) {
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            return `https://${url}`;
+        }
+        return url.replace('http://', 'https://');
+    }
+    // Update website field value on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        const websiteInput = document.getElementById('website');
+        if (websiteInput) {
+            websiteInput.value = ensureHttps(websiteInput.value);
+        }
+    });
+
+    document.querySelector("#edit_company_form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitButton = form.querySelector("#send_otp_btn");
+
+        // Set button to loading state
+        submitButton.classList.add("loading");
+        submitButton.textContent = "Sending OTP...";
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.status) {
+                // alert(result.message); // Show success message
+                showAlert('success', 'Success!', result.message);
+                form.style.display = "none"; // Hide claim profile form
+                document.getElementById("otp_input_section").style.display = "block"; // Show OTP field
+            } else {
+                // alert(result.message || "An unexpected error occurred."); // Show error message
+                showAlert('error', 'Error!', result.message || 'An unexpected error occurred.');
+
+            }
+        } catch (error) {
+            // alert("An unexpected error occurred. Please try again.");
+            showAlert('error', 'Error!', 'An unexpected error occurred.');
+            console.error("Error in form submission:", error);
+        } finally {
+            // Reset button state
+            submitButton.classList.remove("loading");
+            submitButton.textContent = "Send OTP";
+            submitButton.disabled = false;
+        }
+
+    });
+
+    // Handling OTP Verification
+    document.querySelector("#otp-verification_form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(this);
+
+        try {
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (result.status == true) {
+                // alert("OTP Verified Successfully.");
+                // alert(result.message);
+                showAlert('success', 'Success!', result.message);
+                updateRecord();
+            } else {
+                // alert(result.error || "else Invalid OTP. Please try again.");
+                showAlert('error', 'Error!', result.error || 'An unexpected error occurred.');
+
+            }
+        } catch (error) {
+            alert("An unexpected error occurred. Please try again.");
+            console.error("Error in OTP verification:", error);
+        }
+    });
+
+
+    function updateRecord() {
+        const updateFormData = $("#edit_company_form").serialize();  // Serialize form data for submission
+        const companyId = $("#company_id").val();
+        console.log("update functin my aya hai");
+        $.ajax({
+            url: '/regx/edit_company/' + companyId,
+            type: 'POST',
+            data: updateFormData,
+            success: function (response) {
+                // alert(response.message);  // Display the success or failure message from the backend
+                showAlert('success', 'Success!', response.message);
+                window.location.href = response.redirect_url;
+            },
+            error: function (xhr, status, error) {
+                console.error('Error updating record:', error);
+                showAlert('error', 'Error!', 'An error occurred during the update. Please try again.');
+
+                // alert('An error occurred during the update. Please try again.');
+            }
+        });
+    }
+</script>
+{% endblock %}

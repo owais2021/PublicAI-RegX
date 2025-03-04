@@ -1,0 +1,174 @@
+{% extends "page.html" %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<div id="loader" style="display: none;">
+    <div class="spinner"></div>
+</div>
+<style>
+    /* Existing styles... */
+    .dataTable {
+        width: 100%;
+        margin: 20px 0;
+        border-collapse: collapse;
+        border-radius: 5px;
+        overflow: hidden;
+        border: 1px solid #ddd;
+    }
+
+    /* Keep all your existing styles */
+
+    /* SweetAlert2 Customization */
+    .swal2-toast {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        border-radius: 0.375rem !important;
+        font-family: inherit;
+    }
+
+    .swal2-title {
+        font-size: 1.1rem !important;
+        color: #212529 !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .swal2-icon.swal2-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+
+    .swal2-icon.swal2-error {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<!-- alert Library -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Global Alert Function
+    function showAlert(icon, title, text, config = {}) {
+        const defaultConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: icon === 'success' ? 3000 : 4000,
+            timerProgressBar: true,
+            background: '#f8f9fa',
+            iconColor: icon === 'success' ? '#28a745' : '#dc3545'
+        };
+
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            ...defaultConfig,
+            ...config
+        });
+    }
+
+    function getCompanyIdFromUrl() {
+        const segments = window.location.pathname.split('/');
+        return segments[segments.length - 1];
+    }
+
+    jQuery(document).ready(function ($) {
+        const csrfToken = $('input[name="_csrf_token"]').val();
+        const companyId = getCompanyIdFromUrl();
+
+        $('#profilesTable').DataTable({
+            ajax: {
+                url: `/regx/view_claimants/${companyId}`,
+                type: 'GET',
+                dataSrc: 'data'
+            },
+            columns: [
+                { data: 'id', render: (data, type, row, meta) => meta.row + 1 },
+                { data: 'company_name' },
+                { data: 'claimant' },
+                { data: 'claimant_role' },
+                {
+                    data: 'status',
+                    render: function (data) {
+                        return data ? 'Active' : 'Inactive';
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `
+                            <button class="btn btn-sm btn-status ${row.status ? 'btn-danger' : 'btn-success'}"
+                                    data-id="${row.id}" 
+                                    data-status="${!row.status}">
+                                ${row.status ? 'Deactivate' : 'Activate'}
+                            </button>
+                        `;
+                    }
+                }
+            ]
+        });
+
+        // Toggle Status Button with SweetAlert2
+        $('#profilesTable').on('click', '.btn-status', function () {
+            const button = $(this);
+            const claimantId = button.data('id');
+            const newStatus = button.data('status');
+
+            $('#loader').show();
+
+            $.ajax({
+                url: '/regx/toggle_status_claimant',
+                type: 'POST',
+                headers: { 'X-CSRF-Token': csrfToken },
+                data: {
+                    claimant_id: claimantId,
+                    new_status: newStatus,
+                },
+                success: function (response) {
+                    showAlert('success', 'Success!', response.message);
+                    $('#profilesTable').DataTable().ajax.reload();
+                },
+                error: function (xhr) {
+                    showAlert('error', 'Error!', xhr.responseJSON.error || 'An unexpected error occurred.');
+
+                },
+                complete: function () {
+                    $('#loader').hide();
+                }
+            });
+        });
+    });
+
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="regx-container">
+    {% include "side_nav.html" %}
+    <div class="main-content">
+        <h1>All Claimants</h1>
+        {{ h.csrf_input() }}
+        <table id="profilesTable" class="dataTable display">
+            <thead>
+                <tr>
+                    <th>SR No</th>
+                    <th>Company Name</th>
+                    <th>Claimant</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
