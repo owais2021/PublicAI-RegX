@@ -182,9 +182,21 @@
                 <label for="address">Company Address</label>
                 <div class="address-fields">
                     <input type="text" id="street" name="street" placeholder="Street" autocomplete="off" required />
-                    <input type="text" id="postcode" name="postcode" placeholder="Postcode" autocomplete="off"
-                        required />
-                    <input type="text" id="city" name="city" placeholder="City" autocomplete="off" required />
+                    <div class="form-columns" style="margin-top: 12px;">
+                        <div class="form-column">
+                            <div class="form-group">
+                                <input type="text" id="postcode" name="postcode" placeholder="Postcode"
+                                    autocomplete="off" required />
+                            </div>
+                        </div>
+                        <div class="form-column">
+                            <div class="form-group">
+                                <input type="text" id="city" name="city" placeholder="City" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="text" id="country" name="country" placeholder="Country" autocomplete="off" required />
                 </div>
             </div>
             <!-- Dynamic Alternative Names Section -->

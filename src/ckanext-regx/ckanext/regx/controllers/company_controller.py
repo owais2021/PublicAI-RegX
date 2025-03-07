@@ -36,12 +36,13 @@ class CompanyController:
             street = request.form.get('street')
             postcode = request.form.get('postcode')
             city = request.form.get('city')
+            country = request.form.get('country')
             vat = request.form.get('vat')
             tax_id = request.form.get('tax_id')
             profile_created_by = c.userobj.email
             public_id = OTPManager.generate_uuid()
 
-            company_address = f"{street}, {postcode}, {city}"
+            company_address = f"{street}, {postcode}, {city}, {country}"
 
             log.debug(f"Received data: {company_name}, {website}, {official_email}, {your_email}, {role}, {alternative_names}")  # noqa
 
