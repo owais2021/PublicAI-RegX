@@ -57,11 +57,12 @@ def create_company_table(connection):
         email_address TEXT ,
         status BOOLEAN DEFAULT FALSE, -- Default to inactive
         created TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
-        vat_number TEXT ,
-        tax_id TEXT ,
-        company_address TEXT ,
+        vat_number VARCHAR ,
+        tax_id VARCHAR ,
+        public_id VARCHAR,
+        company_address VARCHAR(255) ,
         is_claimed BOOLEAN DEFAULT FALSE, -- Default to inactive,
-        profile_created_by TEXT
+        profile_created_by VARCHAR
     );
     """
     try:
@@ -74,14 +75,38 @@ def create_company_table(connection):
         log.error(f"Error creating table 'regx_company': {e}")
 
 
+def create_claimants_table(connection):
+    """
+    Create the 'regx_claimants' table in the database if it doesn't already exist.
+    """
+    create_table_query = """
+            CREATE TABLE IF NOT EXISTS regx_claimants (
+                id SERIAL PRIMARY KEY,
+                claimant TEXT,
+                claimant_role TEXT,
+                status BOOLEAN DEFAULT FALSE,
+                c_id VARCHAR NOT NULL,
+                FOREIGN KEY (c_id) REFERENCES regx_company(id) ON DELETE CASCADE
+            )
+        """
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(create_table_query)
+            connection.commit()
+            log.info("Table 'regx_claimants' created successfully!")
+    except Exception as e:
+        connection.rollback()
+        log.error(f"Error creating table 'regx_claimants': {e}")
+
+
 def create_tender_table(connection):
     ###### Create the `regx_tender` table #####
     create_tender_table_query = """
         CREATE TABLE IF NOT EXISTS regx_tender (
         id SERIAL PRIMARY KEY,
-        tender_id TEXT NOT NULL,
-        tender_title TEXT NOT NULL,
-        company_name TEXT NOT NULL,
+        tender_id VARCHAR NULL,
+        tender_title VARCHAR NULL,
+        company_name VARCHAR NULL,
         company_id VARCHAR(255) REFERENCES regx_company(id),
         CONSTRAINT unique_tender UNIQUE (tender_id, company_name)
     );
@@ -120,6 +145,7 @@ def create_tables(connection):
     create_company_table(connection=connection)
     create_tender_table(connection=connection)
     create_alternative_names_table(connection=connection)
+    create_claimants_table(connection=connection)
 
 
 def insert_company_data(company_name, connection):
