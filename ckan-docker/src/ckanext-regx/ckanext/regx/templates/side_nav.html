@@ -4,13 +4,13 @@
         <li><a href="{{ h.url_for('regx.index') }}">🏠 Home</a></li>
         {% if c.user and not c.userobj.sysadmin %}
         <li><a href="{{ h.url_for('regx.company_form') }}">🏢 Create Company</a></li>
-        <li><a href="{{ h.url_for('regx.claim_profile') }}">📋 Claim Profile</a></li>
-        <li><a href="{{ h.url_for('regx.get_profiles') }}">📋 My Data</a></li>
+        <li><a href="{{ h.url_for('regx.claim_profile') }}">🪪 Claim Profile</a></li>
+        <li><a href="{{ h.url_for('regx.get_profiles') }}">👨‍💻 My Data</a></li>
         {% endif %}
         <li><a href="{{ h.url_for('regx.search_company') }}">🔍 Search Profile</a></li>
         {% if c.user and c.userobj.sysadmin %}
         <li><a href="{{ h.url_for('regx.admin_all_user_profiles') }}">👥 All Users</a></li>
-        <li><a href="{{ h.url_for('regx.admin_all_profiles') }}">🏢 Company Profiles</a></li>
+        <li><a href="{{ h.url_for('regx.admin_all_profiles') }}">🖥️ Company Profiles</a></li>
         {% endif %}
 
     </ul>

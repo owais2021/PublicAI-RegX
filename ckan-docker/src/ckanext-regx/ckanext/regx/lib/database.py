@@ -62,6 +62,7 @@ def create_company_table(connection):
         public_id VARCHAR,
         company_address VARCHAR(255) ,
         is_claimed BOOLEAN DEFAULT FALSE, -- Default to inactive,
+        resource_url VARCHAR(255),
         profile_created_by VARCHAR
     );
     """
@@ -106,7 +107,6 @@ def create_tender_table(connection):
         id SERIAL PRIMARY KEY,
         tender_id VARCHAR NULL,
         tender_title VARCHAR NULL,
-        company_name VARCHAR NULL,
         company_id VARCHAR(255) REFERENCES regx_company(id),
         CONSTRAINT unique_tender UNIQUE (tender_id, company_name)
     );

@@ -20,7 +20,6 @@ from ckanext.regx.lib.database import (
 )
 from ckanext.regx.lib.thread_manager import get_scheduler_thread
 
-
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -64,7 +63,6 @@ class RegxPlugin(SingletonPlugin):
 
         @blueprint.route('/')
         def index():
-            #global scheduler_thread
             scheduler_thread=get_scheduler_thread()
             is_paused = scheduler_thread.is_paused()
             extra_vars = {

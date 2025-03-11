@@ -8,7 +8,7 @@
         {{ messages.flash_messages() }}
         <h1>Welcome to the Regx Extension</h1>
         <p>This is the default page for your Regx extension.</p>
-
+        {% if c.user and c.userobj.sysadmin %}
         <!-- Three buttons to trigger different API requests -->
         <button id="fetchDataButton" class="btn btn-primary">Start Fetching Data</button>
         
@@ -20,6 +20,7 @@
         {% endif %}
         
         <button id="stopButton" class="btn btn-danger">Stop Fetching Data</button>
+        {% endif %}
     </div>
 </div>
 
