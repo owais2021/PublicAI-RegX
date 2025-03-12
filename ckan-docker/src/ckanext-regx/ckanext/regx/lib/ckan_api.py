@@ -176,8 +176,6 @@ def create_or_update_datasets_main(pause_event):
 
     ############ Retrieve company names from the database ###########
     company_names = get_package_names_from_db(connection)
-    log.warning("Company Names :::::::::::::::::")
-    log.warning(company_names)
     if not company_names:
         log.warning("No company names found in the database. Exiting...")
         close_db_connection(connection)
@@ -191,6 +189,7 @@ def create_or_update_datasets_main(pause_event):
         ############ Assuming the meta.json file is named after the company and located in the respective folder ###########
         folder_path = os.path.join(LOCAL_JSON_FOLDER, LOCAL_JSON_FILE)
         meta_json_path = os.path.join(folder_path, company_name, 'meta.json')
+        log.info(meta_json_path)
 
         if os.path.exists(meta_json_path):
             log.info(f"Found meta.json for {company_name}.")
@@ -204,7 +203,6 @@ def create_or_update_datasets_main(pause_event):
                     emails = meta_data.get('email', [])
 
                     ############ Save the website and email data to the database ###########
-                   # save_website_and_email(company_name_from_json, website_url, emails, connection)
 
                 ############ Create or update the dataset (package) for this company ###########
                 package = create_or_update_dataset(company_name)

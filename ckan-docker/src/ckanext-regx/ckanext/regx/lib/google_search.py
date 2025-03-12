@@ -27,13 +27,13 @@ SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")
 if not SERPAPI_API_KEY:
     raise ValueError("SERPAPI_API_KEY is missing in environment variables.")
 
-#PARSED_CKAN_DATA_FILE = os.getenv("PARSED_CKAN_DATA_FILE")
-PARSED_CKAN_DATA_FILE = "/srv/app/src_extensions/ckanext-regx/ckanext/regx/scripts/parse-data/all_datasets_data.json"
+PARSED_CKAN_DATA_FILE = os.getenv("PARSED_CKAN_DATA_FILE")
+#PARSED_CKAN_DATA_FILE = "/srv/app/src_extensions/ckanext-regx/ckanext/regx/lib/parse-data/all_datasets_data.json"
 if not PARSED_CKAN_DATA_FILE:
     raise ValueError("PARSED_CKAN_DATA_FILE is missing in environment variables.")
 
-output_dir = os.getenv("COMPANY_DETAILS_FILE", "scripts/scrape-data")
-output_dir="/srv/app/src_extensions/ckanext-regx/ckanext/regx/scripts/scrape-data"
+output_dir = os.getenv("COMPANY_DETAILS_FILE", "/srv/app/src_extensions/ckanext-regx/ckanext/regx/lib/scrape-data")
+#output_dir="/srv/app/src_extensions/ckanext-regx/ckanext/regx/scripts/scrape-data"
 
 ###### Set up logging ######
 logging.basicConfig(level=logging.DEBUG)
@@ -110,8 +110,6 @@ def scrape_pages(links, visited_urls, pause_event, progress=None):
     """Scrape all unique links provided and extract emails."""
     scraped_data = []
     for link in links:
-        log.info("EVENT")
-        log.info(pause_event.is_paused())
         pause_event.wait()
         if link in visited_urls:
             continue
@@ -167,9 +165,6 @@ def process_companies(parsed_data_file, output_dir, api_key, pause_event):
         os.makedirs(output_dir, exist_ok=True)
 
         for company in parsed_data:
-            log.info("EVENT")
-           # log.info(scheduler_thread.is_set())
-            log.info(pause_event.is_paused())
             pause_event.wait()
             company_name = company.get("legalName")
             if not company_name:

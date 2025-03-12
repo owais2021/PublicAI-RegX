@@ -79,7 +79,6 @@ def run_fetching(scheduler_thread):
     log.info("Run fetching!")
     #if not scheduler_thread.is_paused():
     if scheduler_thread.is_set():
-        log.info("################################# This is a log message!")
         ##### Testing
         connection = connect_to_db()
         if connection is None:
@@ -94,7 +93,7 @@ def run_fetching(scheduler_thread):
             process_ckan_data_main(scheduler_thread)
 
             # Step 2: Perform Google search for company details
-            # log.debug("Step 2: Performing Google search for company details...")
+            log.debug("Step 2: Performing Google search for company details...")
             google_search_main(scheduler_thread)
 
             # Step 3: Interact with CKAN API to create/update dataset

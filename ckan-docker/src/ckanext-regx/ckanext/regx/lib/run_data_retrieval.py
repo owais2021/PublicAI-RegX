@@ -34,8 +34,7 @@ def main():
     scheduler_thread = get_scheduler_thread()  # Get the singleton thread
 
     if not scheduler_thread.is_alive():
-        scheduler_thread.start() 
-        
+        scheduler_thread.start()     
 
 def run_fetching(scheduler_thread):
     log.info("Run fetching!")
@@ -55,8 +54,8 @@ def run_fetching(scheduler_thread):
             process_ckan_data_main(scheduler_thread)
 
             # Step 2: Perform Google search for company details
-            # log.debug("Step 2: Performing Google search for company details...")
-            google_search_main(scheduler_thread)
+            log.debug("Step 2: Performing Google search for company details...")
+           # google_search_main(scheduler_thread)
 
             # Step 3: Interact with CKAN API to create/update dataset
             log.debug("Step 3: Interacting with CKAN API...")
@@ -70,30 +69,6 @@ def run_fetching(scheduler_thread):
 
 def clear_all_scheduled_jobs():
     schedule.clear()
-"""
-def run_schedule():
-    schedule.every(30).seconds.do(run_fetching)  # For testing
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
-
-def toggle_pause_job(pause=True):
-    Pauses or resumes the scheduled job.
-    global pause_job
-    pause_job = pause
-    status = "paused" if pause else "resumed"
-    logging.debug(f"Job has been {status}.")
-
-def clear_all_scheduled_jobs():
-    schedule.clear()
-
-
-def main():
-    scheduler_thread = threading.Thread(target=run_schedule)
-    scheduler_thread.daemon = True
-    scheduler_thread.start()
-    """
-
 
 if __name__ == "__main__":
     main()

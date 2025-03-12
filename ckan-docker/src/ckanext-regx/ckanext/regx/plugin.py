@@ -71,7 +71,6 @@ class RegxPlugin(SingletonPlugin):
             """
             Index route for the plugin.
             """
-            self._check_access()  # Accessible to all logged-in users
             return tk.render('index.html', extra_vars)
 
         @blueprint.route('/view_profile/<company_id>', methods=['GET'])

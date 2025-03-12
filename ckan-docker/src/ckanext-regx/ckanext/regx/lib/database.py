@@ -57,6 +57,7 @@ def create_company_table(connection):
         email_address TEXT ,
         status BOOLEAN DEFAULT FALSE, -- Default to inactive
         created TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
+        modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
         vat_number VARCHAR ,
         tax_id VARCHAR ,
         public_id VARCHAR,
@@ -215,7 +216,7 @@ def save_website_and_email(company_name, website_url, emails, resource_url, conn
                     with connection.cursor() as cursor:
                         cursor.execute("""
                             UPDATE regx_company
-                            SET email = %s, modified = CURRENT_TIMESTAMP
+                            SET email_address = %s, modified = CURRENT_TIMESTAMP
                             WHERE company_name = %s;
                         """, (email, company_name))
                     connection.commit()
