@@ -100,7 +100,7 @@ def run_fetching(scheduler_thread):
             log.debug("Step 3: Interacting with CKAN API...")
             ckan_api_main(scheduler_thread)
 
-            log.debug("All steps completed successfully!!!!!!!!!!")
+            log.debug("All steps completed successfully!")
 
         except Exception as e:
             log.error(f"Error during execution: {e}")

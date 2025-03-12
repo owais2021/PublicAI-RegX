@@ -237,6 +237,8 @@ class RegxPlugin(SingletonPlugin):
         tk.add_public_directory(config, 'public')
 
         config['ckan.auth.create_user_via_web'] = 'true'
+        
+        config['ckan.auth.route_after_login'] = 'regx.index'
 
         # Create tables during plugin initialization
         connection = connect_to_db()
