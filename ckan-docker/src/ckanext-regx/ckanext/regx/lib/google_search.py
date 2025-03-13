@@ -17,29 +17,19 @@ import os
 import re
 from urllib.parse import urljoin
 from dotenv import load_dotenv
+from ckanext.regx.lib.database import connect_to_db, close_db_connection, get_package_names_from_db
 import logging
-import time
-###### Load environment variables ######
-load_dotenv()
 
-###### Environment variable setup ######
+load_dotenv()
 SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")
 if not SERPAPI_API_KEY:
     raise ValueError("SERPAPI_API_KEY is missing in environment variables.")
 
-PARSED_CKAN_DATA_FILE = os.getenv("PARSED_CKAN_DATA_FILE")
-#PARSED_CKAN_DATA_FILE = "/srv/app/src_extensions/ckanext-regx/ckanext/regx/lib/parse-data/all_datasets_data.json"
-if not PARSED_CKAN_DATA_FILE:
-    raise ValueError("PARSED_CKAN_DATA_FILE is missing in environment variables.")
+output_dir = os.getenv("COMPANY_DETAILS_FILE", "scripts/scrape-data")
 
-output_dir = os.getenv("COMPANY_DETAILS_FILE", "/srv/app/src_extensions/ckanext-regx/ckanext/regx/lib/scrape-data")
-#output_dir="/srv/app/src_extensions/ckanext-regx/ckanext/regx/scripts/scrape-data"
-
-###### Set up logging ######
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
-###### Define Functions ######
 def find_company_website_with_serpapi(company_name, api_key):
     """Use SerpAPI to find the official website of the company."""
     query = f"{company_name} official site"
@@ -74,6 +64,7 @@ def find_company_website_with_serpapi(company_name, api_key):
 
     return None
 
+
 def get_all_internal_links(base_url):
     """Get all unique internal links from the base URL."""
     try:
@@ -97,7 +88,6 @@ def get_all_internal_links(base_url):
     except requests.exceptions.RequestException as e:
         log.error(f"Error getting internal links from {base_url}: {e}")
         return []
-        
 
 
 def extract_emails(text):
@@ -110,10 +100,10 @@ def scrape_pages(links, visited_urls, pause_event, progress=None):
     """Scrape all unique links provided and extract emails."""
     scraped_data = []
     for link in links:
+        
         pause_event.wait()
         if link in visited_urls:
             continue
-        time.sleep(5)
 
         visited_urls.add(link)
 
@@ -137,7 +127,6 @@ def scrape_pages(links, visited_urls, pause_event, progress=None):
             meta_description = soup.find("meta", attrs={"name": "description"})
             meta_description = meta_description["content"] if meta_description else "No description found"
 
-            ####### Extract emails from the page ######
             emails = list(set(extract_emails(response.text)))
 
             scraped_data.append({
@@ -155,81 +144,86 @@ def scrape_pages(links, visited_urls, pause_event, progress=None):
     return scraped_data
 
 
-def process_companies(parsed_data_file, output_dir, api_key, pause_event):
-    """Process each company, find its official URL, and scrape the website."""
+def fetch_additional_info_via_google_main(pause_event):
+    """Main function to retrieve companies from the database and process them."""
+    connection = connect_to_db()  # Establish database connection
+    if not connection:
+        print("Failed to connect to the database.")
+        return
+
     try:
-        
-        with open(parsed_data_file, "r", encoding="utf-8") as file:
-            parsed_data = json.load(file)
+        company_names = get_package_names_from_db(connection)  # Fetch company names
+        if not company_names:
+            print("No company names retrieved from the database.")
+            return
 
-        os.makedirs(output_dir, exist_ok=True)
+        log.info(f"Retrieved {len(company_names)} company names from the database.")
 
-        for company in parsed_data:
+        os.makedirs(output_dir, exist_ok=True)  # Ensure output directory exists
+
+        for company_name in company_names:
+            log.info(f"Processing company: {company_name}")
             pause_event.wait()
-            company_name = company.get("legalName")
-            if not company_name:
-                log.warning("Skipping entry with missing legalName.")
+
+            # Create a sanitized folder for the company
+            sanitized_name = re.sub(r'[\\/*?:"<>|]', "_", company_name.strip())
+            company_folder = os.path.join(output_dir, sanitized_name)
+            meta_file_path = os.path.join(company_folder, "meta.json")
+
+            # Skip if the company data has already been scraped
+            if os.path.exists(meta_file_path):
+                log.info(f"Data for '{company_name}' already exists. Skipping scraping.")
                 continue
 
-            log.info(f"Processing company: {company_name}")
-            
-            ####### Find the website URL using SerpAPI ######
-            website_url = find_company_website_with_serpapi(company_name, api_key)
-            
+            # Find the website URL using SerpAPI
+            website_url = find_company_website_with_serpapi(company_name, SERPAPI_API_KEY)
             if not website_url:
-                log.warning(f"No website URL found for {company_name}. Skipping.")
+                print(f"No website URL found for {company_name}. Skipping.")
                 continue
 
             log.info(f"Found website: {website_url}")
 
-            ####### Get internal links ######
+            # Get internal links
             links = get_all_internal_links(website_url)
-
             if not links:
-                log.warning(f"No internal links found for {company_name}. Skipping.")
+                log.info(f"No internal links found for {company_name}. Skipping.")
                 continue
 
-            ####### Track progress ######
+            # Track progress
             progress = {'current': 0, 'total': len(links)}
 
-            ####### Set up the visited URLs set ######
+            # Set up the visited URLs set
             visited_urls = set()
 
-            ####### Scrape the pages ######
+            # Scrape the pages
             scraped_data = scrape_pages(links, visited_urls, pause_event, progress)
 
-            ####### Aggregate emails ######
+            # Aggregate emails
             all_emails = set()
             for page in scraped_data:
                 all_emails.update(page["emails"])
 
-            ####### Create a sanitized folder for the company ######
-            sanitized_name = re.sub(r'[\\/*?:"<>|]', "_", company_name.strip())
-            company_folder = os.path.join(output_dir, sanitized_name)
+            # Ensure company directory exists
             os.makedirs(company_folder, exist_ok=True)
 
-            ####### Save the meta information in meta.json ######
+            # Save the meta information in meta.json
             meta_info = {
                 "company_name": company_name,
                 "website_url": website_url,
-                "email": list(all_emails),  # Collect aggregated emails
+                "email": list(all_emails),
                 "links_scraped": len(scraped_data),
                 "scraped_data": scraped_data
             }
 
-            meta_file_path = os.path.join(company_folder, "meta.json")
             with open(meta_file_path, "w", encoding="utf-8") as meta_file:
                 json.dump(meta_info, meta_file, indent=4, ensure_ascii=False)
 
             log.info(f"Meta data for '{company_name}' saved to '{meta_file_path}'")
-    
+
     except Exception as e:
         log.error(f"An error occurred: {e}")
-        
 
+    finally:
+        close_db_connection(connection)  # Ensure the database connection is closed
 
-###### Main function ######
-def fetch_additional_info_via_google_main(pause_event):
-    """Main function to call the process_companies method."""
-    process_companies(PARSED_CKAN_DATA_FILE, output_dir, SERPAPI_API_KEY, pause_event)
 

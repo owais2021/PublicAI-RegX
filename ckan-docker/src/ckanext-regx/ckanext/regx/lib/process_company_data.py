@@ -18,6 +18,7 @@ import logging
 from dotenv import load_dotenv
 from ckanext.regx.lib.database import connect_to_db, insert_company_data, insert_tender_data, close_db_connection
 
+
 ######### Load environment variables file ###########
 load_dotenv()
 
@@ -274,8 +275,8 @@ def fetch_from_procurdat_main(pause_event):
         return
 
     ####### Step 4: Save all extracted data to a single JSON file ######
-    output_file_path = "scripts/parse-data/all_datasets_data.json"
-    save_to_single_file(all_extracted_data, output_file_path)
+    # output_file_path = "scripts/parse-data/all_datasets_data.json"
+    # save_to_single_file(all_extracted_data, output_file_path)
 
      ####### Step 5: Insert unique names and OCID (tender ID) into the database ######
     connection = connect_to_db()
@@ -286,6 +287,13 @@ def fetch_from_procurdat_main(pause_event):
         pause_event.wait()
         log.debug(f"Attempting to insert: ocid={entry['ocid']}, legalName={entry['legalName']}")
         insert_company_data(entry["legalName"], connection)
-        insert_tender_data(entry["ocid"], entry["legalName"], connection)
+        if "tenderTitle" in entry:
+            log.debug("tender_title exists.")
+        else:
+            log.debug("tender_title does not exist.")
+        log.debug("Tender Title: ")
+        log.debug(entry["tenderTitle"])
+        
+        insert_tender_data(entry["legalName"], entry["ocid"], entry["tenderTitle"], connection)
 
     close_db_connection(connection)

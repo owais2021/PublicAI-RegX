@@ -12,6 +12,7 @@ import os
 import psycopg2
 from dotenv import load_dotenv
 import logging
+from ckanext.regx.lib.otp_manager import OTPManager
 
 # Load environment variables
 load_dotenv()
@@ -163,8 +164,9 @@ def insert_company_data(company_name, connection):
 
             if not company_record:
                 ###### Insert the company if it doesn't exist #####
-                insert_company_query = "INSERT INTO regx_company (company_name) VALUES (%s) RETURNING id"
-                cursor.execute(insert_company_query, (company_name,))
+                public_id = OTPManager.generate_uuid()
+                insert_company_query = "INSERT INTO regx_company (id, company_name) VALUES (%s, %s) RETURNING id"
+                cursor.execute(insert_company_query, (public_id, company_name,))
                 company_id = cursor.fetchone()[0]
                 log.info(f"Inserted into 'regx_company': {company_name}")
             else:
@@ -176,7 +178,7 @@ def insert_company_data(company_name, connection):
         log.error(f"Error inserting company data: {e}")
         return None
     
-def insert_tender_data(tender_id, company_name, tender_title, connection):
+def insert_tender_data(company_name, tender_id, tender_title, connection):
     """
     Insert `tender_id`, `company_name`, and `tender_title` into the 'regx_tender' table.
     Ensure the `company_name` exists in the 'regx_company' table.
@@ -191,13 +193,12 @@ def insert_tender_data(tender_id, company_name, tender_title, connection):
         # Insert into `regx_tender` #####
         with connection.cursor() as cursor:
             insert_tender_query = """
-            INSERT INTO regx_tender (tender_id, company_name, tender_title, company_id)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (tender_id, company_name) DO NOTHING;
+            INSERT INTO regx_tender (tender_id, tender_title, company_id)
+            VALUES (%s, %s, %s)
             """
-            cursor.execute(insert_tender_query, (tender_id, company_name, tender_title, company_id))
+            cursor.execute(insert_tender_query, (tender_id, tender_title, company_id))
             connection.commit()
-            log.info(f"Inserted into 'regx_tender': {tender_id}, {company_name}")
+            log.info(f"Inserted into 'regx_tender': {tender_id}")
     except Exception as e:
         connection.rollback()
         log.error(f"Error inserting tender data: {e}")
