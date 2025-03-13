@@ -6,7 +6,7 @@ import json
 from dotenv import load_dotenv
 import sys
 import urllib3
-from scripts.database import connect_to_db, create_table, insert_company_data, insert_tender_data, close_db_connection
+from database import connect_to_db, create_table, insert_company_data, insert_tender_data, close_db_connection
 
 # Suppress SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -181,16 +181,16 @@ def extract_names_and_ocids_from_json(data):
     return extracted_entries
 
 
-def save_to_single_file(data, output_file_path):
-    """
-    Save extracted data to a single JSON file.
-    """
-    try:
-        with open(output_file_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4, ensure_ascii=False)
-        print(f"Data saved to {output_file_path}")
-    except IOError as e:
-        print(f"Failed to save data to file: {e}")
+# def save_to_single_file(data, output_file_path):
+#     """
+#     Save extracted data to a single JSON file.
+#     """
+#     try:
+#         with open(output_file_path, "w", encoding="utf-8") as f:
+#             json.dump(data, f, indent=4, ensure_ascii=False)
+#         print(f"Data saved to {output_file_path}")
+#     except IOError as e:
+#         print(f"Failed to save data to file: {e}")
 
 
 def main():
@@ -206,8 +206,8 @@ def main():
         return
 
     # Process datasets
-    output_file_path = "scripts/parse-data/all_datasets_data.json"
-    os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
+    # output_file_path = "scripts/parse-data/all_datasets_data.json"
+    # os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
 
     all_extracted_data = []
     for dataset in datasets:
@@ -225,7 +225,7 @@ def main():
         print("No data extracted from the datasets.")
         return
 
-    save_to_single_file(all_extracted_data, output_file_path)
+    # save_to_single_file(all_extracted_data, output_file_path)
 
     connection = connect_to_db()
     create_table(connection)

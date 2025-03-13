@@ -211,8 +211,8 @@ def main():
         return
 
     #### Step 4: Save all extracted data to a single JSON file ####
-    output_file_path = "scripts/parse-data/all_datasets_data.json"
-    save_to_single_file(all_extracted_data, output_file_path)
+    # output_file_path = "scripts/parse-data/all_datasets_data.json"
+    # save_to_single_file(all_extracted_data, output_file_path)
 
      #### Step 5: Insert unique names and OCID (tender ID) into the database ####
     connection = connect_to_db()

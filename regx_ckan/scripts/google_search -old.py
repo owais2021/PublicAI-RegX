@@ -9,7 +9,6 @@
 #                      each company.                       #
 #                                                          #
 ############################################################
-
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -17,12 +16,15 @@ import os
 import re
 from urllib.parse import urljoin
 from dotenv import load_dotenv
-from scripts.database import connect_to_db, close_db_connection, get_package_names_from_db
 
 load_dotenv()
 SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")
 if not SERPAPI_API_KEY:
     raise ValueError("SERPAPI_API_KEY is missing in environment variables.")
+
+PARSED_CKAN_DATA_FILE = os.getenv("PARSED_CKAN_DATA_FILE")
+if not PARSED_CKAN_DATA_FILE:
+    raise ValueError("PARSED_CKAN_DATA_FILE is missing in environment variables.")
 
 output_dir = os.getenv("COMPANY_DETAILS_FILE", "scripts/scrape-data")
 
@@ -84,7 +86,6 @@ def get_all_internal_links(base_url):
         print(f"Error getting internal links from {base_url}: {e}")
         return []
 
-
 def extract_emails(text):
     """Extract all email addresses from the given text."""
     email_pattern = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
@@ -119,6 +120,7 @@ def scrape_pages(links, visited_urls, progress=None):
             meta_description = soup.find("meta", attrs={"name": "description"})
             meta_description = meta_description["content"] if meta_description else "No description found"
 
+            #### Extract emails from the page ####
             emails = list(set(extract_emails(response.text)))
 
             scraped_data.append({
@@ -135,77 +137,65 @@ def scrape_pages(links, visited_urls, progress=None):
 
     return scraped_data
 
-
-def main():
-    """Main function to retrieve companies from the database and process them."""
-    connection = connect_to_db() ##### Establish database connection #####
-    if not connection:
-        print("Failed to connect to the database.")
-        return
-
+def process_companies(parsed_data_file, output_dir, api_key):
+    """Process each company, find its official URL, and scrape the website."""
     try:
-        company_names = get_package_names_from_db(connection)  ###### Fetch company names #####
-        if not company_names:
-            print("No company names retrieved from the database.")
-            return
+        with open(parsed_data_file, "r", encoding="utf-8") as file:
+            parsed_data = json.load(file)
 
-        print(f"Retrieved {len(company_names)} company names from the database.")
+        os.makedirs(output_dir, exist_ok=True)
 
-        os.makedirs(output_dir, exist_ok=True)  ###### Ensure output directory exists #####
-
-        for company_name in company_names:
-            print(f"Processing company: {company_name}")
-
-            ##### Create a sanitized folder for the company #####
-            sanitized_name = re.sub(r'[\\/*?:"<>|]', "_", company_name.strip())
-            company_folder = os.path.join(output_dir, sanitized_name)
-            meta_file_path = os.path.join(company_folder, "meta.json")
-
-           ##### Skip if the company data has already been scraped #####
-            if os.path.exists(meta_file_path):
-                print(f"Data for '{company_name}' already exists. Skipping scraping.")
+        for company in parsed_data:
+            company_name = company.get("legalName")
+            if not company_name:
+                print("Skipping entry with missing legalName.")
                 continue
 
-            ###### Find the website URL using SerpAPI #####
-            website_url = find_company_website_with_serpapi(company_name, SERPAPI_API_KEY)
+            print(f"Processing company: {company_name}")
+
+            #### Find the website URL using SerpAPI ####
+            website_url = find_company_website_with_serpapi(company_name, api_key)
             if not website_url:
                 print(f"No website URL found for {company_name}. Skipping.")
                 continue
 
             print(f"Found website: {website_url}")
 
-            # Get internal links
+            #### Get internal links ####
             links = get_all_internal_links(website_url)
             if not links:
                 print(f"No internal links found for {company_name}. Skipping.")
                 continue
 
-            ###### Track progress #####
+            #### Track progress ####
             progress = {'current': 0, 'total': len(links)}
 
-            ###### Set up the visited URLs set #####
+            #### Set up the visited URLs set ####
             visited_urls = set()
 
-            ###### Scrape the pages #####
+            #### Scrape the pages ####
             scraped_data = scrape_pages(links, visited_urls, progress)
 
-            ###### Aggregate emails #####
+            #### Aggregate emails ####
             all_emails = set()
             for page in scraped_data:
                 all_emails.update(page["emails"])
 
-            ###### Ensure company directory exists #####
+            #### Create a sanitized folder for the company ####
+            sanitized_name = re.sub(r'[\\/*?:"<>|]', "_", company_name.strip())
+            company_folder = os.path.join(output_dir, sanitized_name)
             os.makedirs(company_folder, exist_ok=True)
 
-            ###### Save the meta information in meta.json #####
+            #### Save the meta information in meta.json ####
             meta_info = {
                 "company_name": company_name,
                 "website_url": website_url,
-                "email": list(all_emails),
+                "email": list(all_emails),#### Collect aggregated emails ####
                 "links_scraped": len(scraped_data),
                 "scraped_data": scraped_data
             }
 
+            meta_file_path = os.path.join(company_folder, "meta.json")
             with open(meta_file_path, "w", encoding="utf-8") as meta_file:
                 json.dump(meta_info, meta_file, indent=4, ensure_ascii=False)
 
@@ -214,8 +204,9 @@ def main():
     except Exception as e:
         print(f"An error occurred: {e}")
 
-    finally:
-        close_db_connection(connection) 
+def main():
+    """Main function to call the process_companies method."""
+    process_companies(PARSED_CKAN_DATA_FILE, output_dir, SERPAPI_API_KEY)
 
 if __name__ == "__main__":
     main()
