@@ -116,14 +116,14 @@
             ...config
         });
     }
-    // Function to ensure website URL starts with https://
-    function ensureHttps(url) {
-        if (!url) return url; // Handle empty URLs
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            return `https://${url}`;
-        }
-        return url.replace('http://', 'https://');
-    }
+    // // Function to ensure website URL starts with https://
+    // function ensureHttps(url) {
+    //     if (!url) return url; // Handle empty URLs
+    //     if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    //         return `https://${url}`;
+    //     }
+    //     return url.replace('http://', 'https://');
+    // }
 
     jQuery(document).ready(function ($) {
         const csrfToken = $('input[name="_csrf_token"]').val();
@@ -156,10 +156,6 @@
                 // },
                 {
                     data: 'website',
-                    render: function (data, type, row) {
-                        const secureUrl = ensureHttps(data);
-                        return `<a href="${secureUrl}" target="_blank">${secureUrl}</a>`;
-                    }
                 },
                 {
                     data: 'status',
@@ -180,9 +176,7 @@
                                     data-status="${!row.status}">
                                 ${row.status ? 'Deactivate' : 'Activate'}
                             </button>
-                            <button class="btn btn-sm btn-info" onclick="downloadDataset(${row.id})">
-                                Download Dataset
-                            </button>
+                            
                         `;
                     }
                 },
@@ -238,9 +232,9 @@
             });
         });
     });
-    function downloadDataset(companyId) {
-        window.location.href = `/regx/download_dataset/${companyId}`;
-    }
+    // function downloadDataset(companyId) {
+    //     window.location.href = `/regx/download_dataset/${companyId}`;
+    // }
 </script>
 {% endblock %}
 

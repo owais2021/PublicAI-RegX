@@ -126,8 +126,7 @@
     <div class="main-content">
         <!-- Note Box -->
         <div class="note-box">
-            <p><strong>Note:</strong> A company profile can only be searched and edited if it is active in our system
-                and owned by a company official.</p>
+            <p><strong>Note:</strong> A company profile can only be searched and edited if it is active in our system.</p>
         </div>
         <div class="search-container">
             <form method="POST">
@@ -203,32 +202,32 @@
         return url.replace('http://', 'https://');
     }
 
-    // Function to update website links
-    function updateWebsiteLinks() {
-        const websiteLinks = document.querySelectorAll('a.website-link');
-        websiteLinks.forEach(link => {
-            link.href = ensureHttps(link.href);
-            link.textContent = ensureHttps(link.textContent);
-        });
-    }
+    // // Function to update website links
+    // function updateWebsiteLinks() {
+    //     const websiteLinks = document.querySelectorAll('a.website-link');
+    //     websiteLinks.forEach(link => {
+    //         link.href = ensureHttps(link.href);
+    //         link.textContent = ensureHttps(link.textContent);
+    //     });
+    // }
 
-    // Observe changes to the search results container
-    const observer = new MutationObserver((mutationsList) => {
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                // Search results have been updated
-                updateWebsiteLinks();
-            }
-        }
-    });
+    // // Observe changes to the search results container
+    // const observer = new MutationObserver((mutationsList) => {
+    //     for (const mutation of mutationsList) {
+    //         if (mutation.type === 'childList') {
+    //             // Search results have been updated
+    //             updateWebsiteLinks();
+    //         }
+    //     }
+    // });
 
-    // Start observing the search results container
-    const searchResultsContainer = document.getElementById('search-results-container');
-    if (searchResultsContainer) {
-        observer.observe(searchResultsContainer, { childList: true });
-    }
+    // // Start observing the search results container
+    // const searchResultsContainer = document.getElementById('search-results-container');
+    // if (searchResultsContainer) {
+    //     observer.observe(searchResultsContainer, { childList: true });
+    // }
 
-    // Run on initial page load (in case there are pre-loaded results)
-    document.addEventListener('DOMContentLoaded', updateWebsiteLinks);
+    // // Run on initial page load (in case there are pre-loaded results)
+    // document.addEventListener('DOMContentLoaded', updateWebsiteLinks);
 </script>
 {% endblock %}

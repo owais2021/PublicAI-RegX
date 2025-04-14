@@ -110,8 +110,8 @@ def create_tender_table(connection):
         tender_id VARCHAR NULL,
         tender_title VARCHAR NULL,
         company_id VARCHAR(255) REFERENCES regx_company(id),
-        CONSTRAINT unique_tender UNIQUE (tender_id, company_name)
-    );
+        CONSTRAINT unique_tender UNIQUE (tender_id)
+    )
     """
     try:
         with connection.cursor() as cursor:

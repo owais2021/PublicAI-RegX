@@ -33,7 +33,7 @@ class ClaimProfileController:
     @staticmethod
     def submit_claim_profile():
         try:
-            website = OTPManager.parsewebsite(request.form.get('website'))
+            website = request.form.get('website')
             claimant_email = request.form.get('email', '').strip().lower()
             role = request.form.get('role')
 

@@ -28,7 +28,7 @@ class CompanyController:
 
         try:
             company_name = request.form.get('company_name')
-            website = OTPManager.parsewebsite(request.form.get('website'))
+            website = request.form.get('website')
             official_email = request.form.get('official_email')
             your_email = request.form.get('your_email')
             role = request.form.get('role')

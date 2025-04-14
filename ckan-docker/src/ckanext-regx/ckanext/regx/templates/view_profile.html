@@ -333,39 +333,39 @@
     function downloadDataset(resourceUrl) {
         window.location.href = resourceUrl;
     }
-    function ensureHttps(url) {
-        if (!url) return url; // Handle empty URLs
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            return `https://${url}`;
-        }
-        return url.replace('http://', 'https://');
-    }
+    // function ensureHttps(url) {
+    //     if (!url) return url; // Handle empty URLs
+    //     if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    //         return `https://${url}`;
+    //     }
+    //     return url.replace('http://', 'https://');
+    // }
 
-    // Function to update website links
-    function updateWebsiteLinks() {
-        const websiteLinks = document.querySelectorAll('.website-link');
-        websiteLinks.forEach(link => {
-            link.href = ensureHttps(link.href);
-            link.textContent = ensureHttps(link.textContent);
-        });
-    }
-    // Observe changes to the search results container
-    const observer = new MutationObserver((mutationsList) => {
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                // Search results have been updated
-                updateWebsiteLinks();
-            }
-        }
-    });
+    // // Function to update website links
+    // function updateWebsiteLinks() {
+    //     const websiteLinks = document.querySelectorAll('.website-link');
+    //     websiteLinks.forEach(link => {
+    //         link.href = ensureHttps(link.href);
+    //         link.textContent = ensureHttps(link.textContent);
+    //     });
+    // }
+    // // Observe changes to the search results container
+    // const observer = new MutationObserver((mutationsList) => {
+    //     for (const mutation of mutationsList) {
+    //         if (mutation.type === 'childList') {
+    //             // Search results have been updated
+    //             updateWebsiteLinks();
+    //         }
+    //     }
+    // });
 
-    // Start observing the search results container
-    const searchResultsContainer = document.getElementById('search-results-container');
-    if (searchResultsContainer) {
-        observer.observe(searchResultsContainer, { childList: true });
-    }
+    // // Start observing the search results container
+    // const searchResultsContainer = document.getElementById('search-results-container');
+    // if (searchResultsContainer) {
+    //     observer.observe(searchResultsContainer, { childList: true });
+    // }
 
-    // Run on initial page load (in case there are pre-loaded results)
-    document.addEventListener('DOMContentLoaded', updateWebsiteLinks);
+    // // Run on initial page load (in case there are pre-loaded results)
+    // document.addEventListener('DOMContentLoaded', updateWebsiteLinks);
 </script>
 {% endblock %}
